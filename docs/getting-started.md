@@ -1,8 +1,8 @@
 # Getting Started with Arc DevKit
 
-This guide takes you from zero to a working example on the Arc testnet in under ten minutes.
+This guide takes you from zero to a working example on Arc in under ten minutes. It defaults to **Arc Mainnet** (the SDK's default network) but every step works identically on **Arc Testnet** — see the callouts below.
 
-> **Current version:** 0.2+ — All classes and methods documented here reflect the current codebase.
+> **Current version:** 0.9.0 — All classes and methods documented here reflect the current codebase. Full mainnet reference: [docs/mainnet/](mainnet/README.md).
 
 ---
 
@@ -17,7 +17,7 @@ You will also need:
 
 - **Anthropic API key** — required for Dev Copilot ([console.anthropic.com](https://console.anthropic.com))
 - **EVM wallet** — any compatible wallet (MetaMask, Rabby, etc.)
-- **Test USDC** — needed to pay gas on transactions ([Arc testnet faucet](https://faucet.arc.io))
+- **USDC to pay gas** — on mainnet this is real USDC you fund yourself; for development, use **Arc Testnet** instead and get test USDC from the official faucet: [faucet.circle.com](https://faucet.circle.com) (select "Arc Testnet")
 
 ---
 
@@ -55,15 +55,20 @@ Fill in the variables:
 ```dotenv
 # Required
 ANTHROPIC_API_KEY=sk-ant-...
-ARC_RPC_URL=https://arc-testnet.drpc.org
 
-# Optional — defaults shown
-ARC_CHAIN_ID=5042002
+# Optional — network defaults to mainnet; set testnet for development.
+# RPC/chain ID are pre-configured per network (arc_devkit/networks.py) —
+# only set ARC_RPC_URL/ARC_CHAIN_ID to override with your own provider.
+ARC_NETWORK=testnet                # or mainnet (the SDK default)
+ARC_RPC_URL=                       # optional override
+ARC_CHAIN_ID=                      # optional override
 ARC_PRIVATE_KEY=0x...              # needed only for sending transactions
 ANTHROPIC_MODEL=claude-sonnet-4-6  # override the Claude model
 LOG_LEVEL=INFO
 API_KEY=your-secret-key            # enables X-API-Key auth on the REST API
 ```
+
+> **Mainnet uses real funds.** If `ARC_NETWORK` is unset or `mainnet`, any transaction you broadcast spends real USDC. Set `ARC_NETWORK=testnet` while developing — see [docs/mainnet/SECURITY.md](mainnet/SECURITY.md).
 
 Add `.env` to `.gitignore`:
 
@@ -157,7 +162,7 @@ arc ask "What is the Circle Agent Stack?" --json
 arc wallet create
 ```
 
-The private key is displayed once. Copy it to `ARC_PRIVATE_KEY` in your `.env` if you plan to send transactions, and fund it via the [Arc testnet faucet](https://faucet.arc.io).
+The private key is displayed once. Copy it to `ARC_PRIVATE_KEY` in your `.env` if you plan to send transactions, and fund it via the [Arc Testnet faucet](https://faucet.circle.com) (select "Arc Testnet").
 
 ```python
 from arc_devkit.core.wallet import create_wallet
@@ -389,7 +394,7 @@ Or use the wizard: `arc init`
 ### Connection failure on `arc status`
 
 ```bash
-curl -X POST https://arc-testnet.drpc.org \
+curl -X POST https://rpc.testnet.arc.io \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
 ```

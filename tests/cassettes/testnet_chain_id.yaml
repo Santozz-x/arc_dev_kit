@@ -15,7 +15,7 @@ interactions:
       User-Agent:
       - web3.py/7.16.0/web3.providers.rpc.rpc.HTTPProvider
     method: POST
-    uri: https://arc-testnet.drpc.org/
+    uri: https://rpc.testnet.arc.io/
   response:
     body:
       string: '{"id":0,"jsonrpc":"2.0","result":"0x4cef52"}'

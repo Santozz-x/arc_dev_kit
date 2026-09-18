@@ -7,17 +7,32 @@ from typer.testing import CliRunner
 
 from arc_devkit.bridge.models import BridgeStatus, BridgeTransfer
 from arc_devkit.cli.main import app
+from arc_devkit.networks import ContractAddresses, NetworkProfile
 
 runner = CliRunner()
 
 _KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 _TO = "0x" + "b" * 40
 
+# CCTP addresses are now published for testnet/mainnet (see networks.py) — this
+# fake profile simulates a network where they still aren't, to keep covering
+# CCTPBridge's "not published" guard.
+_UNPUBLISHED_PROFILE = NetworkProfile(
+    name="unpublished-fake",
+    chain_id=999,
+    rpc_url="https://fake.example.com",
+    explorer_url=None,
+    contracts=ContractAddresses(usdc=None, eurc=None, cctp_token_messenger=None),
+)
+
 
 class TestBridgeSend:
     def test_send_fails_clearly_when_no_cctp_contract(self, mock_web3):
-        """Today no Arc network has a published CCTP contract — must fail with a clear message."""
-        with patch("arc_devkit.core.connection.get_web3", return_value=mock_web3):
+        """CCTPBridge must fail with a clear message when a network has no published CCTP contract."""
+        with (
+            patch("arc_devkit.core.connection.get_web3", return_value=mock_web3),
+            patch("arc_devkit.bridge.cctp.get_network", return_value=_UNPUBLISHED_PROFILE),
+        ):
             result = runner.invoke(
                 app,
                 [
@@ -99,6 +114,7 @@ class TestBridgeResume:
         with (
             patch("arc_devkit.bridge.store._STORE_DIR", tmp_path),
             patch("arc_devkit.core.connection.get_web3", return_value=mock_web3),
+            patch("arc_devkit.bridge.cctp.get_network", return_value=_UNPUBLISHED_PROFILE),
         ):
             result = runner.invoke(app, ["bridge", "resume", "abc123", "--key", _KEY])
 

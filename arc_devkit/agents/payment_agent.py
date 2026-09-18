@@ -112,13 +112,13 @@ class PaymentAgent(BaseAgent):
 
     def _build_usdc_signed_tx(self, to: str, amount: Decimal) -> tuple:
         """Build and sign a USDC ERC-20 transfer tx; return (signed, gas_limit)."""
-        from arc_devkit.stablecoins.token import (
-            _ERC20_ABI,
-            USDC_ARC_TESTNET_ADDRESS,
-            USDC_MULTIPLIER,
-        )
+        from arc_devkit.config import settings
+        from arc_devkit.stablecoins.token import _ERC20_ABI, USDC_MULTIPLIER
 
-        usdc_address = Web3.to_checksum_address(USDC_ARC_TESTNET_ADDRESS)
+        usdc_contract_address = settings.network.contracts.usdc
+        if usdc_contract_address is None:
+            raise ValueError(f"No USDC contract configured for network {settings.arc_network!r}.")
+        usdc_address = Web3.to_checksum_address(usdc_contract_address)
         contract = self._w3.eth.contract(address=usdc_address, abi=_ERC20_ABI)
         atomic = int(amount * Decimal(str(USDC_MULTIPLIER)))
         nonce = self._w3.eth.get_transaction_count(cast(ChecksumAddress, self._address))

@@ -26,10 +26,18 @@ arcdevkit -v         # alias de --version
 
 ### `arcdevkit status`
 
-Verifica a conexão com o Arc testnet e exibe o bloco atual, chain ID e preço do gas.
+Verifica a conexão com a rede ativa (mainnet por padrão) e exibe o bloco atual, chain ID e preço do gas. Exibe um aviso vermelho de "fundos reais" em mainnet, ciano em testnet.
 
 ```bash
 arcdevkit status
+```
+
+### `arcdevkit doctor`
+
+Health check somente leitura — alcançabilidade do RPC, correspondência do chain ID, bloco mais recente, latência e se o contrato USDC realmente tem código deployado on-chain. Sai com código diferente de zero se algo falhar.
+
+```bash
+arcdevkit doctor
 ```
 
 ---
@@ -187,7 +195,7 @@ arcdevkit debug estimate 0xDest... 10.5 --from 0xRemetente...
 arcdevkit debug trace TX_HASH [--tracer TRACER]
 ```
 
-Busca um trace de chamadas internas via `debug_traceTransaction`, se o RPC suportar. A maioria dos RPCs públicos (incluindo o padrão da testnet Arc) desabilita o namespace `debug_*` — o comando falha com mensagem clara em vez de erro genérico.
+Busca um trace de chamadas internas via `debug_traceTransaction`, se o RPC suportar. A maioria dos RPCs públicos (incluindo o RPC padrão da Circle para a Arc, em mainnet e testnet) desabilita o namespace `debug_*` — o comando falha com mensagem clara em vez de erro genérico.
 
 #### `arcdevkit debug compare`
 
@@ -201,15 +209,15 @@ Analisa duas transações lado a lado e destaca as diferenças (status, custo, r
 
 ### `arcdevkit network`
 
-Perfis de rede (testnet/mainnet) e endereços de contrato.
+Perfis de rede (mainnet/testnet) e endereços de contrato — ambos já totalmente configurados.
 
 ```bash
 arcdevkit network list
-arcdevkit network show testnet
+arcdevkit network show mainnet
 arcdevkit network check-mainnet
 ```
 
-`check-mainnet` é um dry-run que reporta o que falta configurar antes de trocar `ARC_NETWORK` para `mainnet` em produção.
+`check-mainnet` é um dry-run que confirma que nada em `NETWORKS["mainnet"]` é um placeholder — hoje passa por padrão.
 
 ---
 
@@ -238,8 +246,8 @@ arcdevkit bridge status TRANSFER_ID
 arcdevkit bridge resume TRANSFER_ID [--dest-rpc URL --message-transmitter ADDR]
 ```
 
-<Callout type="warning" title="Falha até a Arc publicar o contrato CCTP">
-  Nenhuma rede Arc tem endereço de CCTP TokenMessenger publicado ainda — `bridge send`/`resume` falham com mensagem clara em vez de simular funcionalidade.
+<Callout type="warning" title="Ainda não validado contra uma transferência real">
+  Endereços do CCTP TokenMessengerV2 já estão publicados tanto para mainnet quanto testnet (a Arc é o domain 26), mas `bridge send`/`resume` ainda não foram testados contra um contrato CCTP real da Arc — veja o [módulo CCTP Bridge](/docs/modules/bridge) para as limitações conhecidas antes de depender disso em produção.
 </Callout>
 
 ---
@@ -308,8 +316,9 @@ arc init
 
 Solicita interativamente:
 - `ANTHROPIC_API_KEY` (obrigatório)
-- `ARC_RPC_URL` (padrão: `https://arc-testnet.drpc.org`)
-- `ARC_CHAIN_ID` (padrão: `5042002`)
+- `ARC_NETWORK` (padrão: `mainnet`)
+- `ARC_RPC_URL` (override opcional — em branco usa o default oficial da rede)
+- `ARC_CHAIN_ID` (override opcional — em branco usa o default oficial da rede)
 - `ARC_PRIVATE_KEY` (opcional)
 - `LOG_LEVEL` (padrão: `INFO`)
 
@@ -319,9 +328,10 @@ Solicita interativamente:
 
 ```bash
 arc status [--json] [-v]
+arc doctor
 ```
 
-Verifica conexão com Arc testnet. Com `--json` retorna `connected`, `chain_id`, `block_number`, `gas_price_gwei`.
+Verifica conexão com a rede ativa (mainnet por padrão). Com `--json` retorna `connected`, `network`, `chain_id`, `block_number`, `gas_price_gwei`. `arc doctor` roda um health check completo e somente leitura (RPC, chain ID, bloco mais recente, latência, presença do contrato USDC).
 
 | Opção | Alias | Descrição |
 |---|---|---|
@@ -346,7 +356,7 @@ Consulta o DevCopilot — assistente IA especializado em desenvolvimento Arc.
 | `--verbose` | `-v` | Ativa logs de debug |
 
 ```bash
-arc ask "Como faço deploy na Arc testnet?"
+arc ask "Como funciona o gas em USDC na Arc?"
 arc ask "Gere um contrato USDC vault" --stream
 arc ask "O que é USDC ERC-20?" --json
 arc ask "Explique o Malachite consensus" --raw
@@ -360,7 +370,7 @@ arc ask "Explique o Malachite consensus" --raw
 arc balance ADDRESS [--json] [-v]
 ```
 
-Exibe o saldo nativo ARC e o nonce de uma carteira.
+Exibe o saldo nativo de USDC (gas) e o nonce de uma carteira.
 
 | Opção | Alias | Descrição |
 |---|---|---|
@@ -524,7 +534,7 @@ Cria uma nova carteira EVM e exibe endereço e chave privada uma única vez.
 arc wallet balance ADDRESS [--json]
 ```
 
-Exibe o saldo ARC nativo de uma carteira.
+Exibe o saldo nativo de USDC (gas) de uma carteira.
 
 | Opção | Descrição |
 |---|---|
@@ -535,7 +545,7 @@ Exibe o saldo ARC nativo de uma carteira.
 ### `arc send`
 
 ```bash
-arc send TO AMOUNT [--token TOKEN] [--broadcast] [--json] [-v]
+arc send TO AMOUNT [--token TOKEN] [--broadcast] [--yes] [--json] [-v]
 ```
 
 Constrói (e opcionalmente transmite) uma transação de pagamento na Arc. Requer `ARC_PRIVATE_KEY` configurado.
@@ -544,8 +554,9 @@ Constrói (e opcionalmente transmite) uma transação de pagamento na Arc. Reque
 |---|---|---|---|
 | `TO` | — | — | Endereço EVM do destinatário |
 | `AMOUNT` | — | — | Valor a transferir |
-| `--token TOKEN` | `-t` | `native` | `native` (ARC) ou `usdc` (ERC-20) |
+| `--token TOKEN` | `-t` | `native` | `native` (token de gas USDC) ou `usdc` (ERC-20) |
 | `--broadcast` | `-b` | `False` | Transmite a transação (requer `ARC_PRIVATE_KEY`) |
+| `--yes` | `-y` | `False` | Pula o prompt de confirmação de mainnet (para scripts/automação) |
 | `--json` | — | — | Saída como JSON |
 | `--verbose` | `-v` | — | Ativa logs de debug |
 
@@ -553,15 +564,22 @@ Constrói (e opcionalmente transmite) uma transação de pagamento na Arc. Reque
 # Construir transação (dry run — não envia)
 arc send 0xDest... 5.0 --token native
 
-# Enviar transação ARC nativo
+# Enviar USDC nativo
 arc send 0xDest... 1.0 --token native --broadcast
 
 # Enviar USDC ERC-20
 arc send 0xDest... 10.0 --token usdc --broadcast
+
+# Pular o prompt de confirmação em automação
+arc send 0xDest... 1.0 --broadcast --yes
 ```
 
 <Callout type="warning" title="ARC_PRIVATE_KEY obrigatório para --broadcast">
   Sem a variável de ambiente `ARC_PRIVATE_KEY` configurada, o comando encerra com erro. Use `arc config set ARC_PRIVATE_KEY 0x...` ou defina a variável no `.env`.
+</Callout>
+
+<Callout type="warning" title="Confirmação de fundos reais em mainnet">
+  Quando a rede ativa é mainnet, `--broadcast` imprime `Network: ARC MAINNET` / `WARNING: This transaction uses real funds.` e pede confirmação interativa antes de enviar — passe `--yes` para pular em contextos não interativos. A testnet nunca pede confirmação.
 </Callout>
 
 ---
@@ -675,7 +693,7 @@ Todos os comandos que suportam `--json` retornam dados estruturados para integra
 
 ```bash
 arc status --json
-# {"connected": true, "network": "Arc Testnet", "chain_id": 5042002, "block_number": 4821903, "gas_price_gwei": "1.0"}
+# {"connected": true, "network": "Arc Mainnet", "chain_id": 5042, "block_number": 21500000, "gas_price_gwei": "0.02"}
 
 arc balance 0xSuaCarteira... --json
 # {"address": "0x...", "balance_arc": "1.500000", "nonce": 42}

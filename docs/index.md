@@ -27,7 +27,7 @@ arcdevkit agent pay 0xDest... 5.0 --send
 
 ### USDC
 
-`USDCToken` wraps the USDC ERC-20 contract on Arc. It exposes `balance()`, `transfer()`, `allowance()`, and `approve()` using `Decimal` with 6-decimal precision. The contract address ships as a zero-address placeholder; replace it with the official Arc testnet address once Circle publishes it.
+`USDCToken` wraps the USDC ERC-20 contract on Arc (`0x3600...0000`, identical on mainnet/testnet). It exposes `balance()`, `transfer()`, `transfer_from()`, `allowance()`, and `approve()` using `Decimal` with 6-decimal precision. USDC is also Arc's native gas token at 18 decimals — use `native_usdc_balance()` for that separately (see [docs/mainnet/USDC.md](mainnet/USDC.md)).
 
 ```python
 from arc_devkit.usdc import USDCToken
@@ -79,9 +79,8 @@ Configure your `.env`:
 
 ```dotenv
 ANTHROPIC_API_KEY=sk-ant-...
-ARC_RPC_URL=https://arc-testnet.drpc.org
-ARC_CHAIN_ID=5042002
-# Optional
+# Optional — defaults to mainnet; RPC/chain ID are pre-configured per network
+ARC_NETWORK=testnet   # or mainnet (the SDK default)
 ARC_PRIVATE_KEY=0x...
 ANTHROPIC_MODEL=claude-sonnet-4-6
 API_KEY=your-api-key
@@ -103,9 +102,9 @@ arc status
 | **Gas token** | USDC — no separate native token needed |
 | **Consensus** | Malachite — sub-second finality |
 | **Agent Stack** | Native infrastructure for autonomous economic agents |
-| **Testnet RPC** | `https://arc-testnet.drpc.org` |
-| **Chain ID** | `5042002` |
-| **Mainnet** | Planned Summer 2026 |
+| **Mainnet RPC** | `https://rpc.mainnet.arc.io` — Chain ID `5042` |
+| **Testnet RPC** | `https://rpc.testnet.arc.io` — Chain ID `5042002` |
+| **Mainnet status** | Live — launched 2026-09-16 |
 
 ---
 

@@ -34,7 +34,10 @@ def test_health_ok(client):
 
 
 def test_copilot_ask_retorna_resposta(client, mock_anthropic):
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         resp = client.post("/copilot/ask", json={"prompt": "What is Arc?"})
 
     assert resp.status_code == 200
@@ -171,7 +174,10 @@ def test_copilot_ask_stream_returns_sse(client, mock_anthropic):
     stream_ctx.text_stream = iter(["Hello", " Arc"])
     mock_anthropic.messages.stream.return_value = stream_ctx
 
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         resp = client.post("/copilot/ask/stream", json={"prompt": "Stream this please"})
 
     assert resp.status_code == 200

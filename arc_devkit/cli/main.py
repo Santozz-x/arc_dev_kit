@@ -94,10 +94,12 @@ def codegen(
 
 @app.command()
 def status() -> None:
-    """Check the connection to Arc testnet and display network information."""
+    """Check the connection to the active Arc network and display network information."""
+    from arc_devkit.config import settings
     from arc_devkit.core.connection import check_connection, get_web3
 
-    console.print("\n[bold]Checking Arc connection...[/bold]\n")
+    network_label = f"Arc {settings.arc_network.capitalize()}"
+    console.print(f"\n[bold]Checking {network_label} connection...[/bold]\n")
 
     if not check_connection():
         console.print("[red]✗[/red] Could not connect to Arc.")
@@ -105,7 +107,18 @@ def status() -> None:
         raise typer.Exit(1)
 
     w3 = get_web3()
-    console.print("[green]✓[/green] Connected to Arc testnet!\n")
+    console.print(f"[green]✓[/green] Connected to {network_label}!\n")
     console.print(f"  Current block:  [bold]#{w3.eth.block_number}[/bold]")
     console.print(f"  Chain ID:       [bold]{w3.eth.chain_id}[/bold]")
-    console.print(f"  Gas Price:      [bold]{w3.from_wei(w3.eth.gas_price, 'gwei')} gwei[/bold]\n")
+    console.print(f"  Gas Price:      [bold]{w3.from_wei(w3.eth.gas_price, 'gwei')} gwei[/bold]")
+    if settings.arc_network == "mainnet":
+        console.print("\n  [bold red]⚠ Real funds — this is Arc Mainnet.[/bold red]")
+    console.print()
+
+
+@app.command()
+def doctor() -> None:
+    """Quick health check for the active Arc network — RPC, chain ID, USDC contract, explorer."""
+    from arc_devkit.cli.doctor import run_doctor
+
+    run_doctor(console)

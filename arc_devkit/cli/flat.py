@@ -99,16 +99,19 @@ def status(
     json_output: bool = typer.Option(False, "--json", help="Output as JSON."),
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Enable debug logs."),
 ) -> None:
-    """Check the connection to Arc testnet and display network info."""
+    """Check the connection to the active Arc network and display network info."""
     _set_verbose(verbose)
+    from arc_devkit.config import settings
     from arc_devkit.core.connection import check_connection, get_web3
 
-    with console.status("Connecting to Arc testnet...", spinner="dots"):
+    network_label = f"Arc {settings.arc_network.capitalize()}"
+
+    with console.status(f"Connecting to {network_label}...", spinner="dots"):
         ok = check_connection()
 
     if not ok:
         if json_output:
-            console.print_json(_json.dumps({"connected": False}))
+            console.print_json(_json.dumps({"connected": False, "network": settings.arc_network}))
         else:
             console.print("[red]✗ Connection failed. Check ARC_RPC_URL in your .env[/red]")
         raise typer.Exit(1)
@@ -116,7 +119,7 @@ def status(
     w3 = get_web3()
     data = {
         "connected": True,
-        "network": "Arc Testnet",
+        "network": network_label,
         "chain_id": w3.eth.chain_id,
         "block_number": w3.eth.block_number,
         "gas_price_gwei": str(w3.from_wei(w3.eth.gas_price, "gwei")),
@@ -126,7 +129,10 @@ def status(
         console.print_json(_json.dumps(data))
         return
 
-    tabela = Table(show_header=False, border_style="cyan", padding=(0, 1))
+    is_mainnet = settings.arc_network == "mainnet"
+    accent = "red" if is_mainnet else "cyan"
+
+    tabela = Table(show_header=False, border_style=accent, padding=(0, 1))
     tabela.add_column("field", style="dim")
     tabela.add_column("value", style="bold")
     tabela.add_row("Status", "[green]✓ connected[/green]")
@@ -134,8 +140,20 @@ def status(
     tabela.add_row("Chain ID", str(data["chain_id"]))
     tabela.add_row("Current block", f"#{data['block_number']}")
     tabela.add_row("Gas price", f"{data['gas_price_gwei']} gwei")
+    if is_mainnet:
+        tabela.add_row("", "[bold red]⚠ Real funds — mainnet[/bold red]")
 
-    console.print(Panel(tabela, title="[bold cyan]Arc Testnet[/bold cyan]", border_style="cyan"))
+    console.print(
+        Panel(tabela, title=f"[bold {accent}]{network_label}[/bold {accent}]", border_style=accent)
+    )
+
+
+@app.command()
+def doctor() -> None:
+    """Quick health check for the active Arc network — RPC, chain ID, USDC contract, explorer."""
+    from arc_devkit.cli.doctor import run_doctor
+
+    run_doctor(console)
 
 
 @app.command()
@@ -667,6 +685,12 @@ def send(
     broadcast: bool = typer.Option(
         False, "--broadcast", "-b", help="Broadcast transaction (requires ARC_PRIVATE_KEY)."
     ),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Skip the mainnet confirmation prompt (for scripts/automation).",
+    ),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON."),
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Enable debug logs."),
 ) -> None:
@@ -675,12 +699,22 @@ def send(
 
     import os
 
+    from arc_devkit.config import settings
+
     private_key = os.getenv("ARC_PRIVATE_KEY", "").strip() or None
     if not private_key:
         console.print("[red]ARC_PRIVATE_KEY not set — cannot sign transactions.[/red]")
         raise typer.Exit(1)
 
     dest = _validate_address(to)
+
+    if broadcast and settings.arc_network == "mainnet":
+        console.print("\n[bold red]Network: ARC MAINNET[/bold red]")
+        console.print("[bold red]WARNING: This transaction uses real funds.[/bold red]")
+        console.print(f"  Sending {amount} {'ARC' if token == 'native' else 'USDC'} to {dest}\n")
+        if not yes and not typer.confirm("Broadcast this transaction on Arc Mainnet?"):
+            console.print("[yellow]Aborted — no transaction sent.[/yellow]")
+            raise typer.Exit(1)
 
     from arc_devkit.agents.payment_agent import PaymentAgent
 
@@ -1056,19 +1090,18 @@ def portfolio_report(
 
 def _portfolio_ai_analysis(snapshot) -> str:  # type: ignore[no-untyped-def]
     """Call DevCopilot to generate a brief portfolio analysis."""
+    from arc_devkit.config import settings
     from arc_devkit.copilot.agent import DevCopilot
 
     usdc_str = (
-        f"{snapshot.usdc_balance:.6f} USDC"
-        if snapshot.usdc_balance is not None
-        else "unavailable (contract pending on testnet)"
+        f"{snapshot.usdc_balance:.6f} USDC" if snapshot.usdc_balance is not None else "unavailable"
     )
     sent = sum(1 for tx in snapshot.recent_txs if tx.direction == "sent")
     received = sum(1 for tx in snapshot.recent_txs if tx.direction == "received")
     failed = sum(1 for tx in snapshot.recent_txs if tx.status == "failed")
 
     prompt = (
-        f"Analyze this wallet on the Arc blockchain testnet and give a brief, "
+        f"Analyze this wallet on Arc {settings.arc_network.capitalize()} and give a brief, "
         f"practical summary (3-5 sentences).\n\n"
         f"Wallet: {snapshot.address}\n"
         f"Native (ARC) balance: {snapshot.native_balance:.6f}\n"
@@ -1109,8 +1142,19 @@ def init() -> None:
 
     campos = [
         ("ANTHROPIC_API_KEY", "Your Anthropic API key (sk-ant-...)", True),
-        ("ARC_RPC_URL", "Arc testnet RPC URL", False, "https://arc-testnet.drpc.org"),
-        ("ARC_CHAIN_ID", "Arc chain ID", False, "5042002"),
+        ("ARC_NETWORK", "Network — mainnet or testnet", False, "mainnet"),
+        (
+            "ARC_RPC_URL",
+            "Arc RPC URL override (blank = official default for ARC_NETWORK)",
+            False,
+            "",
+        ),
+        (
+            "ARC_CHAIN_ID",
+            "Arc chain ID override (blank = official default for ARC_NETWORK)",
+            False,
+            "",
+        ),
         ("ARC_PRIVATE_KEY", "EVM private key (optional, 0x...)", False, ""),
         ("LOG_LEVEL", "Log level", False, "INFO"),
     ]

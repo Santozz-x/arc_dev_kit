@@ -1,11 +1,31 @@
 """CCTP (Cross-Chain Transfer Protocol) bridge: burn → attestation → mint.
 
-Arc's CCTP TokenMessenger/MessageTransmitter contract addresses aren't
-published yet (see arc_devkit.networks — contracts.cctp_token_messenger is
-None for both testnet and mainnet), so CCTPBridge raises clearly on
-construction until Sprint 1's placeholder is filled in with a real address.
-The attestation API endpoint is likewise never guessed — set
-CCTP_ATTESTATION_API_URL once Circle publishes support for Arc.
+Arc is assigned CCTP domain 26, and Circle has published TokenMessengerV2 /
+MessageTransmitterV2 / TokenMinterV2 / MessageV2 addresses for both networks
+(see arc_devkit.networks — contracts.cctp_token_messenger etc., sourced from
+docs.arc.io/arc/references/contract-addresses, verified 2026-09-18).
+
+The ABI below targets CCTP V2's depositForBurn signature (TokenMessengerV2),
+which differs from V1 by adding destinationCaller/maxFee/minFinalityThreshold
+parameters. destinationCaller defaults to the zero bytes32 (anyone may call
+receiveMessage on the destination), maxFee defaults to 0, and
+minFinalityThreshold defaults to 2000 (CCTP V2 "standard" finality — pass
+1000 for "fast" finality if the destination domain supports it).
+
+IMPORTANT — NOT VALIDATED: this V2 signature matches Circle's publicly
+documented CCTP V2 interface (developers.circle.com), but has NOT been
+exercised against a live Arc CCTP V2 contract from this SDK. Test
+start_transfer()/mint() end-to-end on Arc Testnet with small amounts before
+relying on this against real mainnet funds.
+
+KNOWN ISSUE — attestation API: Circle's public Iris API
+(https://iris-api.circle.com mainnet, https://iris-api-sandbox.circle.com
+sandbox/testnet) is the standard CCTP attestation endpoint, but as of
+2026-09-18 there is an open, unresolved public report that it does not
+return attestations for Arc Testnet's domain 26:
+https://github.com/circlefin/evm-cctp-contracts/issues/110 — verify current
+status before relying on fetch_attestation() in production. No default is
+set for CCTP_ATTESTATION_API_URL precisely to avoid masking this.
 """
 
 import logging
@@ -28,6 +48,13 @@ _RECEIPT_TIMEOUT = 120
 _ATTESTATION_POLL_INTERVAL = 5
 _ATTESTATION_TIMEOUT = 300
 
+# CCTP V2 depositForBurn defaults: "standard" finality (~13-19 min on most
+# chains; pass 1000 for "fast" finality where the destination domain
+# supports it), no destination-caller restriction, no max fee cap.
+CCTP_STANDARD_FINALITY_THRESHOLD = 2000
+CCTP_FAST_FINALITY_THRESHOLD = 1000
+_ZERO_BYTES32 = b"\x00" * 32
+
 # Minimal ABI for Circle's CCTP TokenMessenger + MessageTransmitter (public,
 # chain-agnostic standard — see github.com/circlefin/evm-cctp-contracts).
 _TOKEN_MESSENGER_ABI = [
@@ -37,9 +64,12 @@ _TOKEN_MESSENGER_ABI = [
             {"name": "destinationDomain", "type": "uint32"},
             {"name": "mintRecipient", "type": "bytes32"},
             {"name": "burnToken", "type": "address"},
+            {"name": "destinationCaller", "type": "bytes32"},
+            {"name": "maxFee", "type": "uint256"},
+            {"name": "minFinalityThreshold", "type": "uint32"},
         ],
         "name": "depositForBurn",
-        "outputs": [{"name": "_nonce", "type": "uint64"}],
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function",
     },
@@ -114,9 +144,12 @@ class CCTPBridge:
         destination_domain: int,
         dest_chain_id: int,
         private_key: str,
+        max_fee_usdc: Decimal = Decimal("0"),
+        min_finality_threshold: int = CCTP_STANDARD_FINALITY_THRESHOLD,
+        destination_caller: bytes = _ZERO_BYTES32,
     ) -> BridgeTransfer:
         """
-        Burn USDC on Arc to start a CCTP cross-chain transfer.
+        Burn USDC on Arc to start a CCTP V2 cross-chain transfer.
 
         Args:
             amount_usdc: Amount to bridge.
@@ -126,6 +159,12 @@ class CCTPBridge:
                                  not looked up automatically).
             dest_chain_id: EVM chain id of the destination chain (for the record).
             private_key: Sender's Arc private key.
+            max_fee_usdc: Maximum fee the sender is willing to pay for a fast
+                          transfer (0 = standard finality only, no fee cap needed).
+            min_finality_threshold: CCTP_STANDARD_FINALITY_THRESHOLD (default)
+                                     or CCTP_FAST_FINALITY_THRESHOLD.
+            destination_caller: Restrict who may call receiveMessage() on the
+                                 destination (zero bytes32 = anyone may call it).
 
         Returns:
             BridgeTransfer with status BURNED (success) or FAILED.
@@ -133,7 +172,7 @@ class CCTPBridge:
         from eth_account import Account
 
         from arc_devkit.core.validation import validate_address
-        from arc_devkit.stablecoins.token import USDC_ARC_TESTNET_ADDRESS, USDC_MULTIPLIER
+        from arc_devkit.stablecoins.token import USDC_MULTIPLIER
 
         sender = Account.from_key(private_key).address
         try:
@@ -173,14 +212,21 @@ class CCTPBridge:
                 return transfer
 
         try:
+            if self._profile.contracts.usdc is None:
+                raise ValueError(f"No USDC contract configured for network {self._profile.name!r}.")
             atomic = int(amount_usdc * USDC_MULTIPLIER)
+            max_fee_atomic = int(max_fee_usdc * USDC_MULTIPLIER)
             mint_recipient = Web3.to_bytes(hexstr=recipient_cs).rjust(32, b"\x00")
+            burn_token = Web3.to_checksum_address(self._profile.contracts.usdc)
 
             tx = self._token_messenger.functions.depositForBurn(
                 atomic,
                 destination_domain,
                 mint_recipient,
-                Web3.to_checksum_address(USDC_ARC_TESTNET_ADDRESS),
+                burn_token,
+                destination_caller,
+                max_fee_atomic,
+                min_finality_threshold,
             ).build_transaction(
                 {
                     "from": sender,

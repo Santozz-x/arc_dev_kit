@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arc-devkit"
-version = "0.8.0"
+version = "0.10.0"
 description = "Plataforma open source de ferramentas para desenvolvedores da Arc blockchain (Circle)"
 readme = "README.md"
 license = "MIT"
@@ -65,6 +65,10 @@ dev = [
     "mcp>=1.2",
     # Testes de carga da REST API (locustfile.py)
     "locust>=2.29",
+    # Providers opcionais do Dev Copilot — necessários para os testes em
+    # tests/test_copilot_providers.py (mocked, nenhuma chamada real de API)
+    "google-genai>=1.0",
+    "openai>=1.0",
 ]
 # Armazenamento da chave privada no keyring do SO (arc config keyring-set)
 security = [
@@ -75,6 +79,16 @@ security = [
 mcp = [
     "mcp>=1.2",
 ]
+# Dev Copilot com Google Gemini como backend (COPILOT_PROVIDER=gemini)
+gemini = [
+    "google-genai>=1.0",
+]
+# Dev Copilot com OpenAI/GPT como backend (COPILOT_PROVIDER=openai)
+openai = [
+    "openai>=1.0",
+]
+# COPILOT_PROVIDER=ollama não precisa de extra — usa httpx (já é dependência
+# principal) contra a API REST local do Ollama.
 
 [project.scripts]
 # CLI agrupada: `arcdevkit copilot ask`, `arcdevkit agent pay`, etc.

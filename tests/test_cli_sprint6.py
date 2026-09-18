@@ -10,8 +10,24 @@ runner = CliRunner()
 
 
 class TestNetworkCheckMainnet:
-    def test_not_ready_exits_nonzero(self):
+    def test_ready_by_default(self):
+        """Arc Mainnet config is fully filled in (see networks.py) — ready out of the box."""
         result = runner.invoke(app, ["network", "check-mainnet"])
+        assert result.exit_code == 0
+        assert "Ready" in result.stdout
+
+    def test_not_ready_exits_nonzero(self):
+        from arc_devkit.networks import ContractAddresses, NetworkProfile
+
+        incomplete_profile = NetworkProfile(
+            name="mainnet",
+            chain_id=None,
+            rpc_url=None,
+            explorer_url=None,
+            contracts=ContractAddresses(usdc=None, eurc=None, cctp_token_messenger=None),
+        )
+        with patch("arc_devkit.networks.get_network", return_value=incomplete_profile):
+            result = runner.invoke(app, ["network", "check-mainnet"])
         assert result.exit_code == 1
         assert "missing" in result.stdout.lower()
 
@@ -28,6 +44,9 @@ class TestNetworkCheckMainnet:
                 eurc="0x" + "2" * 40,
                 cctp_token_messenger="0x" + "3" * 40,
                 gateway="0x" + "4" * 40,
+                cctp_message_transmitter="0x" + "5" * 40,
+                gateway_wallet="0x" + "6" * 40,
+                gateway_minter="0x" + "7" * 40,
             ),
         )
         with patch("arc_devkit.networks.get_network", return_value=fake_profile):

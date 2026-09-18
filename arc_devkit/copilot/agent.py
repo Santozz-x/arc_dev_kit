@@ -1,18 +1,21 @@
-"""Dev Copilot — AI assistant specialized in Arc blockchain development."""
+"""Dev Copilot — AI assistant specialized in Arc blockchain development.
 
-import base64
+Backed by a pluggable LLM provider (arc_devkit.copilot.providers) selected
+via the COPILOT_PROVIDER env var — anthropic (default), gemini, openai, or
+ollama. Only the Anthropic backend supports run_agent()'s tool-use loop
+today (see LLMProvider.supports_tools) — everything else (ask, ask_stream,
+history, caching, offline mode) works identically across providers.
+"""
+
 import hashlib
 import logging
-import mimetypes
 import time
 from collections.abc import Callable, Iterator
-from pathlib import Path
 from typing import cast
 
-import anthropic
-from anthropic.types import MessageParam, TextBlock, ToolUseBlock
-
 from arc_devkit.config import settings
+from arc_devkit.copilot.providers import ChatMessage, get_provider
+from arc_devkit.copilot.providers.anthropic_provider import AnthropicProvider
 from arc_devkit.core.validation import validate_prompt
 
 logger = logging.getLogger(__name__)
@@ -32,11 +35,17 @@ You are an expert assistant specialized in Arc blockchain development.
   emerging standards for autonomous economic agents on Arc — both are very
   recent EIPs with no canonical Arc deployment address yet
 - CCTP (Cross-Chain Transfer Protocol): Circle's native USDC bridge
-  (burn → attestation → mint) between Arc and other EVM chains — Arc's CCTP
-  contract addresses aren't published yet either
+  (burn → attestation → mint) between Arc and other EVM chains — Arc is CCTP
+  domain 26; TokenMessengerV2/MessageTransmitterV2 addresses are published
+  for both networks (see arc_devkit.networks)
 - Account Abstraction / paymasters: on the roadmap for fee sponsorship in
   EURC/other stablecoins — no Arc paymaster is live yet
-- Testnet active since October 2025; mainnet expected Summer 2026
+- Arc Mainnet launched 2026-09-16 (chain ID 5042); Arc Testnet remains fully
+  supported for development (chain ID 5042002) — arc-devkit defaults to
+  mainnet but both are first-class via ARC_NETWORK=mainnet|testnet
+- USDC on Arc has a dual interface: it's the *native* gas token (18 decimals,
+  like ETH) AND exposed as an ERC-20 (6 decimals) at a fixed precompile
+  address — the two views share the same balance, never conflate them
 - Standard EVM RPC: compatible with web3.py, ethers.js, Hardhat, Foundry
 
 ## arc-devkit — primary library (always prefer this)
@@ -46,7 +55,8 @@ You are an expert assistant specialized in Arc blockchain development.
 - Covers: wallet creation, USDC/EURC payments, fee quotes, CCTP bridging,
   transaction debugging, AI analysis, agent identity/reputation, ERC-8183
   job escrow, and autonomous agent templates
-- All modules are pre-configured for Arc testnet — no manual web3 setup needed
+- All modules are pre-configured for Arc Mainnet by default (Arc Testnet via
+  ARC_NETWORK=testnet) — no manual web3 setup needed
 - Several forward-looking modules (`arc_devkit.bridge`, `arc_devkit.paymaster`,
   `arc_devkit.agents.identity`/`jobs`) implement the on-chain mechanics for
   features Arc/Circle haven't published contract addresses for yet — they
@@ -88,17 +98,18 @@ _CACHE_TTL_SECONDS = 300  # 5 minutes
 MAX_AGENT_ITERATIONS = 10
 
 _OFFLINE_RESPONSE = (
-    "[Offline mode] Arc DevKit is running without an Anthropic API key. "
-    "Set ANTHROPIC_API_KEY in your .env to enable AI responses."
+    "[Offline mode] Arc DevKit is running without an AI provider configured. "
+    "Set ANTHROPIC_API_KEY (or COPILOT_PROVIDER + the matching key/model) in "
+    "your .env to enable AI responses."
 )
-
-_SUPPORTED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
 
 class DevCopilot:
     """
     AI assistant for Arc blockchain development.
 
+    Backed by a pluggable LLM provider — anthropic (default), gemini, openai,
+    or ollama, selected via COPILOT_PROVIDER (see arc_devkit.copilot.providers).
     Supports in-memory conversation history, token-by-token streaming,
     response caching for identical prompts, token counting, optional offline
     mode (no API key required), and image attachments in prompts.
@@ -117,16 +128,19 @@ class DevCopilot:
         Args:
             extra_context: Additional context injected into the system prompt
                            (e.g. contract ABI, project context).
-            model: Model override (default: ANTHROPIC_MODEL from .env).
+            model: Model override for the active provider (default: that
+                   provider's own *_MODEL setting, e.g. ANTHROPIC_MODEL).
             offline: When True, return a mock response without calling the API.
                      Useful for local tests and CI environments without an API key.
             max_tokens: Override the default MAX_TOKENS limit for this instance.
         """
         self._offline = offline
-        self._client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-        self.model = model or settings.anthropic_model
+        self._provider = get_provider()
+        if model:
+            self._provider.model = model
+        self.model = self._provider.model
         self._max_tokens = max_tokens if max_tokens is not None else self.MAX_TOKENS
-        self._history: list[dict] = []
+        self._history: list[ChatMessage] = []
         self._cache: dict[str, tuple[str, float]] = {}  # key → (response, timestamp)
 
         system = _SYSTEM_PROMPT
@@ -134,27 +148,17 @@ class DevCopilot:
             system += f"\n\n## Additional context\n{extra_context}"
         self._system = system
 
-        logger.debug("DevCopilot initialized with model %s (offline=%s)", self.model, offline)
+        logger.debug(
+            "DevCopilot initialized with provider=%s model=%s (offline=%s)",
+            settings.copilot_provider,
+            self.model,
+            offline,
+        )
 
     @property
     def MODEL(self) -> str:
         """Backward-compat property; returns self.model."""
         return self.model
-
-    @staticmethod
-    def _build_image_block(image_path: str) -> dict:
-        """Read an image file and return an Anthropic image content block."""
-        path = Path(image_path)
-        mime, _ = mimetypes.guess_type(str(path))
-        if mime not in _SUPPORTED_IMAGE_TYPES:
-            raise ValueError(
-                f"Unsupported image type '{mime}'. Supported: {_SUPPORTED_IMAGE_TYPES}"
-            )
-        data = base64.standard_b64encode(path.read_bytes()).decode()
-        return {
-            "type": "image",
-            "source": {"type": "base64", "media_type": mime, "data": data},
-        }
 
     def ask(self, prompt: str, image_path: str | None = None) -> str:
         """
@@ -180,34 +184,11 @@ class DevCopilot:
             logger.debug("Cache hit for prompt: %.40s...", prompt)
             return cached
 
-        if image_path:
-            content: list[dict] | str = [
-                self._build_image_block(image_path),
-                {"type": "text", "text": prompt},
-            ]
-        else:
-            content = prompt
-
-        self._history.append({"role": "user", "content": content})
+        self._history.append(ChatMessage(role="user", content=prompt, image_path=image_path))
         logger.info("Dev Copilot queried — prompt: %.80s...", prompt)
 
-        message = self._client.messages.create(
-            model=self.model,
-            max_tokens=self._max_tokens,
-            system=self._system,
-            messages=cast(list[MessageParam], list(self._history)),
-        )
-
-        text_blocks = [b for b in message.content if isinstance(b, TextBlock)]
-        response_text = text_blocks[0].text
-        self._history.append({"role": "assistant", "content": response_text})
-
-        usage = message.usage
-        logger.info(
-            "Tokens — input: %d, output: %d",
-            usage.input_tokens,
-            usage.output_tokens,
-        )
+        response_text = self._provider.ask(self._system, self._history, self._max_tokens)
+        self._history.append(ChatMessage(role="assistant", content=response_text))
 
         self._cache[cache_key] = (response_text, time.time())
         return response_text
@@ -228,31 +209,16 @@ class DevCopilot:
             yield _OFFLINE_RESPONSE
             return
 
-        if image_path:
-            content: list[dict] | str = [
-                self._build_image_block(image_path),
-                {"type": "text", "text": prompt},
-            ]
-        else:
-            content = prompt
-
-        self._history.append({"role": "user", "content": content})
+        self._history.append(ChatMessage(role="user", content=prompt, image_path=image_path))
         logger.info("Dev Copilot (stream) queried — prompt: %.80s...", prompt)
 
         chunks: list[str] = []
-
-        with self._client.messages.stream(
-            model=self.model,
-            max_tokens=self._max_tokens,
-            system=self._system,
-            messages=cast(list[MessageParam], self._history),
-        ) as stream:
-            for text in stream.text_stream:
-                chunks.append(text)
-                yield text
+        for text in self._provider.ask_stream(self._system, self._history, self._max_tokens):
+            chunks.append(text)
+            yield text
 
         full = "".join(chunks)
-        self._history.append({"role": "assistant", "content": full})
+        self._history.append(ChatMessage(role="assistant", content=full))
 
     def run_agent(
         self,
@@ -278,12 +244,29 @@ class DevCopilot:
         Returns:
             Dict with 'response' (final text), 'tool_calls' (list of
             {name, input, is_error}), and 'iterations'.
+
+        Raises:
+            NotImplementedError: If the active provider isn't Anthropic —
+                the tool-use loop below is implemented against Anthropic's
+                tool_use content-block format specifically; other providers
+                use incompatible tool-calling schemas and aren't wired up
+                yet (see LLMProvider.supports_tools).
         """
         if self._offline:
             return {"response": _OFFLINE_RESPONSE, "tool_calls": [], "iterations": 0}
 
+        if not self._provider.supports_tools or not isinstance(self._provider, AnthropicProvider):
+            raise NotImplementedError(
+                f"Agentic tool-use mode (run_agent) is only supported with "
+                f"COPILOT_PROVIDER=anthropic today (active provider: "
+                f"{settings.copilot_provider!r})."
+            )
+
+        from anthropic.types import MessageParam, TextBlock, ToolUseBlock
+
         from arc_devkit.copilot.tools import TOOL_DEFINITIONS, execute_tool
 
+        client = self._provider.client
         prompt = validate_prompt(prompt)
         system = self._system + _AGENT_PROMPT_ADDENDUM
         messages: list[dict] = [{"role": "user", "content": prompt}]
@@ -292,7 +275,7 @@ class DevCopilot:
         logger.info("Dev Copilot (agent) queried — prompt: %.80s...", prompt)
 
         for iteration in range(1, max_iterations + 1):
-            message = self._client.messages.create(
+            message = client.messages.create(
                 model=self.model,
                 max_tokens=self.MAX_TOKENS,
                 system=system,
@@ -345,17 +328,18 @@ class DevCopilot:
         self._history.clear()
 
     def count_tokens(self, prompt: str) -> int:
-        """Estimate token count for a prompt (no API call sent)."""
+        """
+        Estimate token count for a prompt (no completion call sent).
+
+        Only Anthropic implements a dedicated counting endpoint today —
+        other providers return 0 rather than an inaccurate estimate (see
+        LLMProvider.count_tokens).
+        """
         if self._offline:
             return 0
-        response = self._client.messages.count_tokens(
-            model=self.model,
-            system=self._system,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return response.input_tokens
+        return self._provider.count_tokens(self._system, prompt)
 
     @property
     def history(self) -> list[dict]:
-        """Return a copy of the conversation history."""
-        return list(self._history)
+        """Return a copy of the conversation history, as plain role/content dicts."""
+        return [{"role": m.role, "content": m.content} for m in self._history]

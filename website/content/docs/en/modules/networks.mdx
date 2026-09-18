@@ -1,11 +1,11 @@
 ---
 title: "Networks"
-description: "Testnet/mainnet network profiles and the contract address registry."
+description: "Mainnet/testnet network profiles and the contract address registry."
 section: "Modules"
 order: 30
 ---
 
-The `arc_devkit.networks` module centralizes network configuration — chain ID, default RPC, block explorer, and contract addresses — so switching between testnet and mainnet is **configuration only**, never a code change.
+The `arc_devkit.networks` module centralizes network configuration — chain ID, RPC (HTTP + WebSocket), block explorer, and contract addresses — so switching between mainnet and testnet is **configuration only**, never a code change. Both networks are fully configured with official values, sourced and verified against `docs.arc.io` on 2026-09-18.
 
 ## Import
 
@@ -16,49 +16,72 @@ from arc_devkit.networks import NETWORKS, get_network
 ## Available profiles
 
 ```python
-profile = get_network("testnet")
+profile = get_network("mainnet")
 
-print(profile.chain_id)     # 5042002
-print(profile.rpc_url)      # https://arc-testnet.drpc.org
-print(profile.contracts.usdc)
+print(profile.chain_id)     # 5042
+print(profile.rpc_url)      # https://rpc.mainnet.arc.io
+print(profile.explorer_url) # https://explorer.arc.io
+print(profile.contracts.usdc)  # 0x3600000000000000000000000000000000000000
 ```
 
-| Network | Chain ID | Default RPC | Status |
+| Network | Chain ID | Default RPC | Explorer |
 |---|---|---|---|
-| `testnet` | `5042002` | `https://arc-testnet.drpc.org` | Configured |
-| `mainnet` | `None` | `None` | Placeholder — Arc mainnet launches summer 2026 |
+| `mainnet` (default) | `5042` | `https://rpc.mainnet.arc.io` | `https://explorer.arc.io` |
+| `testnet` | `5042002` | `https://rpc.testnet.arc.io` | `https://explorer.testnet.arc.io` |
 
-<Callout type="warning" title="mainnet is still a placeholder">
-  Every field of `NETWORKS["mainnet"]` is `None` until Arc/Circle publish real values. Using `ARC_NETWORK=mainnet` without explicitly setting `ARC_RPC_URL` fails clearly at startup — never with a made-up address.
+<Callout type="tip" title="USDC's dual interface">
+  USDC on Arc is both the *native* gas token (18 decimals, read like ETH via `eth_getBalance`) and an ERC-20 (6 decimals) at a fixed, network-shared address (`profile.contracts.usdc`, `0x3600...0000`). Both views share the same underlying balance — see the [USDC module](/docs/modules/usdc-token) for how to read each correctly.
 </Callout>
+
+Every `ContractAddresses` field is filled in for both networks: `usdc`, `eurc`, `cctp_token_messenger`, `cctp_message_transmitter`, `cctp_token_minter`, `cctp_message`, `cctp_domain` (26 for Arc), `gateway_wallet`, `gateway_minter`, `multicall3`, `permit2`.
 
 ## Selecting the active network
 
-The `ARC_NETWORK` variable (`testnet` by default) selects RPC/chain-ID defaults:
+The `ARC_NETWORK` variable (**`mainnet` by default**) selects RPC/chain-ID/contract defaults:
 
 ```bash
 # .env
-ARC_NETWORK=testnet
+ARC_NETWORK=testnet   # switch to testnet for development
 ```
 
-`ARC_RPC_URL`/`ARC_CHAIN_ID`, when set explicitly, always take precedence over the profile — existing `.env` files keep working unchanged.
+`ARC_RPC_URL`/`ARC_CHAIN_ID`, when set explicitly, always take precedence over the profile — useful for pointing at your own provider (Alchemy, QuickNode, self-hosted) instead of Circle's default RPC.
 
 ```python
 from arc_devkit.config import settings
 
-print(settings.arc_network)   # "testnet"
-print(settings.network.name)  # "testnet" — resolved NetworkProfile
+print(settings.arc_network)   # "mainnet"
+print(settings.network.name)  # "mainnet" — resolved NetworkProfile
 ```
 
-## Checking mainnet readiness
+<Callout type="warning" title="config.py never guesses a chain ID">
+  If a network profile has no chain ID and `ARC_CHAIN_ID` isn't set explicitly, `config.py` raises a clear startup error instead of silently falling back to another network's chain ID — a class of bug that existed before Arc Mainnet support was added and could have led to a transaction being signed for the wrong chain without warning.
+</Callout>
+
+## The `Arc` facade
+
+```python
+from arc_devkit import Arc
+
+arc = Arc.mainnet()          # or Arc.testnet()
+arc = Arc.mainnet(rpc_url="https://your-provider.example.com")  # custom RPC
+
+print(arc.network.chain_id, arc.network.rpc_url)
+print(arc.latest_block()["number"])
+print(arc.health_check())
+```
+
+`Arc` is an additive convenience layer over the same modules documented throughout this site — every existing per-module import (`from arc_devkit.debugger import TxAnalyzer`, etc.) keeps working unchanged.
+
+## Checking network health
 
 ```bash
 arcdevkit network list
 arcdevkit network show mainnet
 arcdevkit network check-mainnet
+arcdevkit doctor
 ```
 
-`check-mainnet` is a dry-run that reports which fields (`chain_id`, `rpc_url`, `explorer_url`, contract addresses) are still missing before switching to `ARC_NETWORK=mainnet` in production — see the [full checklist](https://github.com/Jeielsantosdev/arc_dev_kit/blob/main/MAINNET_CHECKLIST.md) in the repository.
+`doctor` (also `Arc.health_check()`) is a **read-only** check — never signs or sends anything — that verifies RPC reachability, chain ID match, latest block, latency, and that the USDC contract actually has code deployed on-chain (`eth_getCode`, not just "an address is configured").
 
 ## API reference
 
@@ -66,7 +89,7 @@ arcdevkit network check-mainnet
 
 | Parameter | Type | Description |
 |---|---|---|
-| `name` | `str` | `"testnet"` or `"mainnet"` |
+| `name` | `str` | `"mainnet"` or `"testnet"` |
 
 Raises `ValueError` for unknown names.
 
@@ -77,5 +100,8 @@ Raises `ValueError` for unknown names.
 | `name` | `str` | Network name |
 | `chain_id` | `int \| None` | Chain ID |
 | `rpc_url` | `str \| None` | Default RPC URL |
+| `ws_rpc_url` | `str \| None` | Default WebSocket RPC URL (mainnet's primary is HTTP-only) |
 | `explorer_url` | `str \| None` | Block explorer URL |
-| `contracts` | `ContractAddresses` | USDC, EURC, CCTP, Gateway addresses |
+| `native_currency_symbol` | `str` | `"USDC"` |
+| `native_currency_decimals` | `int` | `18` |
+| `contracts` | `ContractAddresses` | USDC, EURC, USYC, CCTP V2, Gateway, Multicall3, Permit2 addresses |

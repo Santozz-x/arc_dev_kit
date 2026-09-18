@@ -5,7 +5,24 @@ section: "Módulos"
 order: 10
 ---
 
-O `DevCopilot` é um assistente IA baseado no Claude Sonnet da Anthropic, com contexto completo da blockchain Arc embutido no system prompt. Responde perguntas, gera código, explica conceitos do ecossistema Circle — sem configuração extra.
+O `DevCopilot` é um assistente IA com contexto completo da blockchain Arc embutido no system prompt. Responde perguntas, gera código, explica conceitos do ecossistema Circle — sem configuração extra além de uma chave de API.
+
+## Backend multi-provedor
+
+O `DevCopilot` é alimentado por um provedor de LLM plugável, selecionado globalmente via `COPILOT_PROVIDER` no `.env`:
+
+```dotenv
+COPILOT_PROVIDER=anthropic   # padrão — requer ANTHROPIC_API_KEY
+# COPILOT_PROVIDER=gemini    # pip install arc-devkit[gemini] — requer GEMINI_API_KEY, GEMINI_MODEL
+# COPILOT_PROVIDER=openai    # pip install arc-devkit[openai] — requer OPENAI_API_KEY, OPENAI_MODEL
+# COPILOT_PROVIDER=ollama    # local, sem API key — requer OLLAMA_MODEL (já baixado) e um servidor Ollama rodando
+```
+
+`ask()`, `ask_stream()`, histórico, cache, modo offline e anexos de imagem funcionam identicamente nos quatro provedores — o código desta página não muda dependendo de qual está ativo. **Nenhum nome de modelo é adivinhado** para Gemini/OpenAI/Ollama: `GEMINI_MODEL`/`OPENAI_MODEL`/`OLLAMA_MODEL` precisam ser definidos explicitamente, já que um default hardcoded poderia silenciosamente apontar para um modelo descontinuado ou inexistente.
+
+<Callout type="warning" title="Modo agentic com tools é exclusivo do Anthropic">
+  `run_agent()` (o loop de tool-use somente leitura usado por `arc ask --agent`) levanta `NotImplementedError` para qualquer provedor que não seja `anthropic` — cada provedor tem um schema de tool-calling incompatível que ainda não foi implementado.
+</Callout>
 
 ## Instalação e importação
 
@@ -115,7 +132,8 @@ copilot = DevCopilot(
 | Cache | 5 minutos de TTL por hash MD5 do prompt + modelo |
 | Histórico | `self.history` — lista de mensagens da conversa atual |
 | Token logging | Uso de tokens logado em cada chamada (`DEBUG`) |
-| Modelo configurável | `ANTHROPIC_MODEL` env var (padrão: `claude-sonnet-4-6`) |
+| Provedor configurável | `COPILOT_PROVIDER` env var (padrão: `anthropic`) |
+| Modelo configurável | env var `*_MODEL` de cada provedor (ex.: `ANTHROPIC_MODEL`, padrão: `claude-sonnet-4-6`) |
 
 <Callout type="tip" title="Uma instância por sessão">
   `DevCopilot` é instanciado por chamada — não é um singleton. Se quiser histórico contínuo, mantenha a mesma instância durante a sessão.

@@ -63,10 +63,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
           <div className="mt-8 mx-3 p-3 rounded-lg bg-arc-500/10 border border-arc-500/20">
             <p className="text-xs font-medium text-arc-300 mb-1">
-              {tr(i18n.sidebar.testnet, lang)}
+              {tr(i18n.sidebar.network, lang)}
             </p>
-            <p className="text-xs text-zinc-500">Chain ID: 5042002</p>
-            <p className="text-xs text-zinc-500 mt-0.5 break-all">arc-testnet.drpc.org</p>
+            <p className="text-xs text-zinc-500">Chain ID: 5042</p>
+            <p className="text-xs text-zinc-500 mt-0.5 break-all">rpc.mainnet.arc.io</p>
+            <p className="text-xs text-zinc-600 mt-1.5 break-all">
+              Testnet: 5042002 · rpc.testnet.arc.io
+            </p>
           </div>
         </nav>
       </aside>

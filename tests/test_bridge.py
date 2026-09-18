@@ -98,17 +98,36 @@ class TestBridgeStore:
 # ---------------------------------------------------------------------------
 
 
+_UNPUBLISHED_PROFILE = NetworkProfile(
+    name="unpublished-fake",
+    chain_id=999,
+    rpc_url="https://fake.example.com",
+    explorer_url=None,
+    contracts=ContractAddresses(usdc=None, eurc=None, cctp_token_messenger=None),
+)
+
+
 class TestCCTPBridgeConstruction:
     def test_raises_when_no_token_messenger_published(self):
         from arc_devkit.bridge.cctp import CCTPBridge
 
         with pytest.raises(ValueError, match="No CCTP TokenMessenger"):
-            CCTPBridge(w3=MagicMock(), network="testnet")
+            CCTPBridge(w3=MagicMock(), network=_UNPUBLISHED_PROFILE)
 
     def test_constructs_with_fake_profile(self):
         from arc_devkit.bridge.cctp import CCTPBridge
 
         bridge = CCTPBridge(w3=MagicMock(), network=_FAKE_PROFILE)
+        assert bridge is not None
+
+    def test_constructs_with_real_testnet_profile(self):
+        """CCTP addresses are now published — testnet/mainnet construct successfully."""
+        from arc_devkit.bridge.cctp import CCTPBridge
+
+        bridge = CCTPBridge(w3=MagicMock(), network="testnet")
+        assert bridge is not None
+
+        bridge = CCTPBridge(w3=MagicMock(), network="mainnet")
         assert bridge is not None
 
 

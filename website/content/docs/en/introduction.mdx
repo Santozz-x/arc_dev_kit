@@ -5,26 +5,29 @@ section: "Start"
 order: 1
 ---
 
-Arc DevKit is a complete Python toolkit for developers building on the **Arc blockchain** — Circle's EVM-compatible Layer 1, where USDC is the gas token and block finality is sub-second thanks to Malachite consensus.
+Arc DevKit is an open-source Python toolkit for building, debugging, and interacting with applications on **Arc Mainnet** — Circle's EVM-compatible Layer 1, where USDC is the gas token and block finality is sub-second thanks to Malachite consensus. Arc Testnet remains fully supported for development.
 
 ## What is Arc?
 
-**Arc** is an L1 blockchain created by Circle (creators of USDC), designed specifically for programmable payments and autonomous economic agents.
+**Arc** is an L1 blockchain created by Circle (creators of USDC), designed specifically for programmable payments and autonomous economic agents. Mainnet launched **2026-09-16**.
 
 | Feature | Detail |
 |---|---|
 | **EVM-compatible** | Solidity, web3.py and ethers.js work without modification |
-| **USDC as gas** | No ETH required — all fees are paid in USDC |
+| **USDC as gas** | No ETH required — USDC is the native gas token (18 decimals), also exposed as a synchronized ERC-20 view (6 decimals) |
 | **Malachite consensus** | Sub-second block finality |
 | **Circle Agent Stack** | Native infrastructure for economic AI agents |
-| **Chain ID** | `5042002` · Testnet RPC: `https://arc-testnet.drpc.org` |
+| **Mainnet** | Chain ID `5042` · RPC: `https://rpc.mainnet.arc.io` · Explorer: `https://explorer.arc.io` |
+| **Testnet** | Chain ID `5042002` · RPC: `https://rpc.testnet.arc.io` · Explorer: `https://explorer.testnet.arc.io` |
 
 ## Why Arc DevKit?
 
 Building on Arc exposes you to a series of practical friction points that Arc DevKit resolves:
 
-- **Gas in USDC**: unlike other EVMs, you need to calculate and manage fees in USDC (6 decimal places), not ETH (18 decimals)
-- **PoA Middleware**: the Arc testnet uses proof-of-authority and requires `ExtraDataToPOAMiddleware` in web3.py
+- **No manual network setup**: chain ID, RPC, explorer, and contract addresses (USDC, EURC, CCTP, Gateway) are pre-configured and sourced for both mainnet and testnet — see [Networks](/docs/modules/networks)
+- **Gas in USDC**: unlike other EVMs, USDC is both the native gas token (18 decimals) and an ERC-20 (6 decimals) — the DevKit models both correctly and never conflates them
+- **PoA Middleware**: Arc runs a permissioned validator model on both networks and requires `ExtraDataToPOAMiddleware` in web3.py
+- **Mainnet safety**: the CLI warns and asks for confirmation before broadcasting real-fund transactions on mainnet
 - **Economic agents**: Arc was designed for AI agents — the DevKit provides ready-made base classes
 - **Complex debugging**: reverted EVM transactions have encoded error messages; the DevKit decodes and explains them in natural language via AI
 
@@ -38,7 +41,9 @@ arc_devkit/
 ├── debugger/        Tx Debugger — decode and analyze transactions
 ├── analytics/       Portfolio Analyzer — balance, history, score
 ├── stablecoins/     StablecoinToken — USDC and EURC (usdc/ kept as a shim)
-├── networks.py      Testnet/mainnet network profiles
+├── client.py        Arc facade — Arc.mainnet()/Arc.testnet() single entry point
+├── health.py        Shared network health check (`arc doctor`)
+├── networks.py      Mainnet/testnet network profiles (chain ID, RPC, contracts)
 ├── paymaster/       Paymaster detection + ERC-4337 helpers
 ├── bridge/          CCTP — cross-chain USDC bridge
 ├── oracle/          Price feed client (Chainlink-compatible)
@@ -51,15 +56,15 @@ arc_devkit/
 └── cli/             CLI `arc` and `arcdevkit`
 ```
 
-<Callout type="tip" title="2026 H2 roadmap">
-  The sections marked as new above are part of the `SPRINTS_2026H2.md` roadmap — covering multi-network config, fees/paymaster, the CCTP bridge, the agentic economy (ERC-8004/8183), the MCP server, and privacy/post-quantum prep. See the [Modules](#modules) section in the sidebar for full documentation of each one.
+<Callout type="tip" title="Mainnet migration">
+  Arc Mainnet launched 2026-09-16 and is Arc DevKit's default network as of v0.9.0. See the full sourced network reference, security guidance, and migration notes in the SDK repository's `docs/mainnet/` directory.
 </Callout>
 
 ## Requirements
 
 - Python **3.11+**
-- Anthropic API key (for AI modules)
-- Arc RPC URL (testnet: `https://arc-testnet.drpc.org`)
+- An AI provider key for Dev Copilot — Anthropic (default), or Google Gemini / OpenAI / a local Ollama server (see [Dev Copilot](/docs/modules/dev-copilot))
+- No RPC URL required to get started — Arc Mainnet (`https://rpc.mainnet.arc.io`) and Arc Testnet (`https://rpc.testnet.arc.io`) both ship with official defaults; set `ARC_RPC_URL` only to use your own provider
 
 <Callout type="tip" title="Next step">
   Follow the [installation guide](/docs/getting-started) to set up Arc DevKit in 5 minutes.

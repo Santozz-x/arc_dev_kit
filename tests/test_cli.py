@@ -184,7 +184,7 @@ class TestConfig:
 
     def test_config_list(self, tmp_path, monkeypatch):
         env_file = tmp_path / ".env"
-        env_file.write_text("ARC_RPC_URL=https://arc-testnet.drpc.org\nLOG_LEVEL=INFO\n")
+        env_file.write_text("ARC_RPC_URL=https://rpc.testnet.arc.io\nLOG_LEVEL=INFO\n")
         monkeypatch.chdir(tmp_path)
 
         result = runner.invoke(app, ["config", "list"])
@@ -447,3 +447,81 @@ class TestSendCommand:
         monkeypatch.delenv("ARC_PRIVATE_KEY", raising=False)
         result = runner.invoke(app, ["send", "0x" + "b" * 40, "1.0"])
         assert result.exit_code != 0
+
+
+class TestSendMainnetSafety:
+    """`--broadcast` on mainnet requires confirmation unless --yes is passed.
+
+    settings is a module-level singleton resolved once at import time, so
+    ARC_NETWORK env changes after import don't reach it — these tests patch
+    arc_devkit.config.settings directly (flat.py re-reads it via a local
+    `from arc_devkit.config import settings` inside send()).
+    """
+
+    _PRIVKEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+
+    @staticmethod
+    def _settings_for(network: str):
+        import dataclasses
+
+        from arc_devkit.config import settings as real_settings
+
+        return dataclasses.replace(real_settings, arc_network=network)
+
+    def test_broadcast_on_mainnet_without_yes_prompts_and_aborts_on_no(
+        self, mock_web3, monkeypatch
+    ):
+        monkeypatch.setenv("ARC_PRIVATE_KEY", self._PRIVKEY)
+
+        with (
+            patch("arc_devkit.config.settings", self._settings_for("mainnet")),
+            patch("arc_devkit.agents.payment_agent.PaymentAgent.execute") as mock_execute,
+        ):
+            result = runner.invoke(
+                app,
+                ["send", "0x" + "b" * 40, "1.0", "--broadcast"],
+                input="n\n",
+            )
+
+        assert result.exit_code == 1
+        assert "MAINNET" in result.output
+        assert "real funds" in result.output.lower()
+        mock_execute.assert_not_called()
+
+    def test_broadcast_on_mainnet_with_yes_flag_skips_prompt(self, mock_web3, monkeypatch):
+        monkeypatch.setenv("ARC_PRIVATE_KEY", self._PRIVKEY)
+
+        sent_result = {
+            "status": "sent",
+            "token": "native",
+            "from": "0x" + "a" * 40,
+            "to": "0x" + "b" * 40,
+            "amount_usdc": 1.0,
+            "tx_hash": "0x" + "aa" * 32,
+        }
+        with (
+            patch("arc_devkit.config.settings", self._settings_for("mainnet")),
+            patch("arc_devkit.agents.payment_agent.PaymentAgent.execute", return_value=sent_result),
+        ):
+            result = runner.invoke(app, ["send", "0x" + "b" * 40, "1.0", "--broadcast", "--yes"])
+
+        assert result.exit_code == 0
+
+    def test_broadcast_on_testnet_does_not_prompt(self, mock_web3, monkeypatch):
+        monkeypatch.setenv("ARC_PRIVATE_KEY", self._PRIVKEY)
+
+        sent_result = {
+            "status": "sent",
+            "token": "native",
+            "from": "0x" + "a" * 40,
+            "to": "0x" + "b" * 40,
+            "amount_usdc": 1.0,
+            "tx_hash": "0x" + "bb" * 32,
+        }
+        with (
+            patch("arc_devkit.config.settings", self._settings_for("testnet")),
+            patch("arc_devkit.agents.payment_agent.PaymentAgent.execute", return_value=sent_result),
+        ):
+            result = runner.invoke(app, ["send", "0x" + "b" * 40, "1.0", "--broadcast"])
+
+        assert result.exit_code == 0

@@ -42,7 +42,7 @@ mypy arc_devkit/
 | Pipeline | Trigger | O que faz |
 |---|---|---|
 | `ci.yml` | Todo push/PR | Lint + testes unitários no Python 3.11, 3.12, 3.13 + mypy |
-| `ci.yml` (integration) | Branch `main` | `pytest -m integration` contra Arc testnet |
+| `ci.yml` (integration) | Branch `main` | `pytest -m integration` contra RPCs reais da Arc (somente leitura) |
 | `publish.yml` | Tag `v*` | Build wheel + sdist, publicação no PyPI, GitHub Release |
 
 ## Convenções de código

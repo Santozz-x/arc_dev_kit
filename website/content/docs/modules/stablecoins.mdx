@@ -1,11 +1,15 @@
 ---
 title: "Stablecoins (USDC/EURC)"
-description: "StablecoinToken genérico para USDC e EURC — 6 decimais."
+description: "StablecoinToken genérico para USDC e EURC — 6 decimais (view ERC-20)."
 section: "Módulos"
 order: 31
 ---
 
 O módulo `arc_devkit.stablecoins` generaliza o antigo `usdc/token.py` em um wrapper único para qualquer stablecoin da Circle na Arc.
+
+<Callout type="tip" title="Interface dupla do USDC">
+  O USDC na Arc é tanto o token de gas *nativo* (18 decimais, lido via `arc.get_balance()` / `native_usdc_balance()`) quanto um ERC-20 (6 decimais, este módulo) em um endereço fixo, compartilhado entre as redes. As duas visões compartilham o mesmo saldo — veja [Redes](/docs/modules/networks) e nunca confunda as duas escalas decimais.
+</Callout>
 
 ## Importação
 
@@ -20,28 +24,33 @@ from arc_devkit.stablecoins import USDCToken, EURCToken, StablecoinToken
 ## USDC
 
 ```python
-usdc = USDCToken(contract_address="0xEnderecoDoContrato")
+usdc = USDCToken()  # já usa o endereço ERC-20 real — idêntico em mainnet e testnet
 balance = usdc.balance("0xCarteira")
 print(f"{balance} USDC")
 ```
 
+`USDCToken()` sem argumento resolve para `arc_devkit.networks.USDC_ERC20_ADDRESS` (`0x3600...0000`) — versões anteriores usavam um endereço zero como placeholder; isso foi substituído pelo endereço real e oficial publicado pela Circle.
+
 ## EURC
 
 ```python
-eurc = EURCToken(contract_address="0xEnderecoEURC")
+from arc_devkit.config import settings
+
+eurc = EURCToken(contract_address=settings.network.contracts.eurc)
 balance = eurc.balance("0xCarteira")
 ```
 
-<Callout type="warning" title="Sem endereço EURC padrão">
-  Diferente do USDC (que tem um endereço placeholder de testnet), `EURCToken` exige `contract_address` explícito — nenhum endereço EURC foi publicado pela Circle na Arc ainda.
+<Callout type="tip" title="Endereços de EURC já foram publicados">
+  Diferente do USDC (um único endereço compartilhado entre as redes), o EURC tem um endereço distinto por rede — leia de `settings.network.contracts.eurc` em vez de fixar o valor, já que ele difere entre mainnet e testnet.
 </Callout>
 
-## Transferências e approve
+## Transferências, approve e transferFrom
 
 ```python
 tx_hash = usdc.transfer(to="0xDestino", amount=Decimal("10.5"), private_key="0x...")
 tx_hash = usdc.approve(spender="0xContrato", amount=Decimal("100"), private_key="0x...")
 allowance = usdc.allowance(owner="0xDono", spender="0xContrato")
+tx_hash = usdc.transfer_from(owner="0xDono", to="0xDestino", amount=Decimal("5"), private_key="0xChaveDoSpender")
 ```
 
 ## Referência da API
@@ -53,7 +62,7 @@ allowance = usdc.allowance(owner="0xDono", spender="0xContrato")
 | `contract_address` | `str` | Endereço do contrato ERC-20 |
 | `w3` | `Web3 \| None` | Instância opcional (usa `get_web3()` por padrão) |
 | `symbol` | `str` | Símbolo exibido (ex: `"USDC"`, `"EURC"`) |
-| `decimals` | `int` | Casas decimais (Circle usa 6 para todas as stablecoins na Arc) |
+| `decimals` | `int` | Casas decimais (stablecoins da Circle usam 6 via interface ERC-20) |
 
 | Método | Descrição |
 |---|---|
@@ -61,3 +70,8 @@ allowance = usdc.allowance(owner="0xDono", spender="0xContrato")
 | `allowance(owner, spender)` | Allowance atual |
 | `transfer(to, amount, private_key)` | Transfere e retorna tx hash |
 | `approve(spender, amount, private_key)` | Aprova gasto e retorna tx hash |
+| `transfer_from(owner, to, amount, private_key)` | Transfere usando uma allowance existente e retorna tx hash |
+
+### `native_usdc_balance(address, w3=None) -> Decimal`
+
+Lê o saldo *nativo* de USDC (18 decimais) via `eth_getBalance` — não a view ERC-20 acima. Veja [Redes](/docs/modules/networks).

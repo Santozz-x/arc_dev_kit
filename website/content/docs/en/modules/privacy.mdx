@@ -44,8 +44,8 @@ client = ConfidentialTransferClient(w3=get_web3(), contract_address="0xConfident
 result = client.send_confidential(to="0xRecipient", encrypted_amount=payload_bytes, private_key="0x...")
 ```
 
-<Callout type="danger" title="Protocol not exposed on testnet yet">
-  `ConfidentialTransferClient` raises without an explicit `contract_address` — Arc's (TEE-based) confidential-transfer protocol isn't available on testnet yet.
+<Callout type="danger" title="Protocol not exposed on Arc yet">
+  `ConfidentialTransferClient` raises without an explicit `contract_address` — Arc's (TEE-based) confidential-transfer protocol isn't exposed on either mainnet or testnet yet, as of 2026-09-18.
 </Callout>
 
 ## API reference

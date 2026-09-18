@@ -10,19 +10,20 @@ order: 3
 The `arc_devkit/config.py` module is the central configuration point. It:
 
 1. Loads the `.env` file via `python-dotenv` at import time
-2. Validates that `ANTHROPIC_API_KEY` and `ARC_RPC_URL` are present
+2. Validates that `ANTHROPIC_API_KEY` (when `COPILOT_PROVIDER=anthropic`, the default) and `ARC_RPC_URL` are resolvable
 3. Exposes a `settings` singleton importable by all modules
 
 ```python
 from arc_devkit.config import settings
 
-print(settings.arc_rpc_url)       # https://arc-testnet.drpc.org
-print(settings.arc_chain_id)      # 5042002
+print(settings.arc_network)       # mainnet (the SDK default)
+print(settings.arc_rpc_url)       # https://rpc.mainnet.arc.io
+print(settings.arc_chain_id)      # 5042
 print(settings.anthropic_model)   # claude-sonnet-4-6
 ```
 
 <Callout type="warning" title="Import-time error">
-  If `ANTHROPIC_API_KEY` or `ARC_RPC_URL` are not defined, `config.py` raises `EnvironmentError` immediately when imported.
+  If `ANTHROPIC_API_KEY` (for the active provider) or `ARC_RPC_URL` can't be resolved, `config.py` raises `EnvironmentError` immediately when imported.
   In tests, set the variables before importing any `arc_devkit` module.
 </Callout>
 
@@ -30,31 +31,36 @@ print(settings.anthropic_model)   # claude-sonnet-4-6
 
 | Attribute | Env var | Type | Default |
 |---|---|---|---|
-| `anthropic_api_key` | `ANTHROPIC_API_KEY` | `str` | — |
-| `arc_rpc_url` | `ARC_RPC_URL` | `str` | — |
+| `anthropic_api_key` | `ANTHROPIC_API_KEY` | `str` | — (required if `copilot_provider="anthropic"`) |
+| `copilot_provider` | `COPILOT_PROVIDER` | `str` | `"anthropic"` |
+| `gemini_api_key` / `gemini_model` | `GEMINI_API_KEY` / `GEMINI_MODEL` | `str \| None` | `None` |
+| `openai_api_key` / `openai_model` | `OPENAI_API_KEY` / `OPENAI_MODEL` | `str \| None` | `None` |
+| `ollama_base_url` / `ollama_model` | `OLLAMA_BASE_URL` / `OLLAMA_MODEL` | `str` / `str \| None` | `"http://localhost:11434"` / `None` |
+| `arc_rpc_url` | `ARC_RPC_URL` | `str` | network default (mainnet/testnet) |
 | `arc_private_key` | `ARC_PRIVATE_KEY` | `str \| None` | `None` |
 | `anthropic_model` | `ANTHROPIC_MODEL` | `str` | `claude-sonnet-4-6` |
-| `arc_chain_id` | `ARC_CHAIN_ID` | `int` | `5042002` |
+| `arc_chain_id` | `ARC_CHAIN_ID` | `int` | network default (`5042` mainnet / `5042002` testnet) |
 | `log_level` | `LOG_LEVEL` | `str` | `INFO` |
 | `api_key` | `API_KEY` | `str \| None` | `None` |
-| `arc_network` | `ARC_NETWORK` | `str` | `"testnet"` |
+| `arc_network` | `ARC_NETWORK` | `str` | `"mainnet"` |
 | `cctp_attestation_api_url` | `CCTP_ATTESTATION_API_URL` | `str \| None` | `None` |
 | `arc_llms_txt_url` | `ARC_LLMS_TXT_URL` | `str \| None` | `None` |
 
 <Callout type="tip" title="ARC_NETWORK doesn't break existing .env files">
-  `ARC_NETWORK` selects RPC/chain-ID defaults from `arc_devkit/networks.py`. `ARC_RPC_URL`/`ARC_CHAIN_ID`, when set, always take precedence — `.env` files from before Sprint 1 keep working unchanged. See the [Networks](/docs/modules/networks) module.
+  `ARC_NETWORK` selects RPC/chain-ID/contract defaults from `arc_devkit/networks.py` — both `mainnet` and `testnet` are fully configured with official values (see [Networks](/docs/modules/networks)). `ARC_RPC_URL`/`ARC_CHAIN_ID`, when set, always take precedence. `config.py` never silently falls back to another network's chain ID — if it can't be resolved, it raises a clear error instead.
 </Callout>
 
 ## Configuring in tests
 
-`conftest.py` sets variables before any package import:
+`conftest.py` sets variables before any package import — tests explicitly pin `ARC_NETWORK=testnet` for determinism, independent of the SDK's own mainnet default:
 
 ```python
 # tests/conftest.py
 import os
 
 os.environ.setdefault("ANTHROPIC_API_KEY", "test-key")
-os.environ.setdefault("ARC_RPC_URL", "https://arc-testnet.drpc.org")
+os.environ.setdefault("ARC_NETWORK", "testnet")
+os.environ.setdefault("ARC_RPC_URL", "https://rpc.testnet.arc.io")
 ```
 
 Integration tests (that make real network calls) are marked with `@pytest.mark.integration` and skipped by default:
@@ -69,16 +75,16 @@ pytest -m integration
 
 ## Web3 connection
 
-`core/connection.py` creates a web3 instance with the middleware required for the Arc testnet:
+`core/connection.py` creates a web3 instance with the middleware required for Arc's permissioned-validator model (both mainnet and testnet):
 
 ```python
 from arc_devkit.core.connection import get_web3
 
 w3 = get_web3()
-print(w3.eth.chain_id)  # 5042002
+print(w3.eth.chain_id)  # 5042 (mainnet) or 5042002 (testnet), per ARC_NETWORK
 ```
 
-`ExtraDataToPOAMiddleware` is injected automatically — required for proof-of-authority chains like the Arc testnet.
+`ExtraDataToPOAMiddleware` is injected automatically — required for proof-of-authority-style chains like Arc.
 
 <Callout type="tip" title="get_web3() is not cached">
   The `get_web3()` function creates a new instance on every call. This avoids state issues in multi-threaded environments, but you can cache locally if you need performance.

@@ -5,31 +5,34 @@
 [![Coverage](https://img.shields.io/badge/coverage-80%25-brightgreen.svg)](https://github.com/Jeielsantosdev/arc-devkit)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Testnet](https://img.shields.io/badge/arc-testnet-orange.svg)](https://arc.io)
+[![Arc Mainnet](https://img.shields.io/badge/arc-mainnet-brightgreen.svg)](https://explorer.arc.io)
 
-**Arc DevKit** is a complete Python SDK for developers building on the **Arc blockchain** — Circle's EVM-compatible Layer 1 with USDC as the gas token and sub-second finality.
+**Arc DevKit** is an open-source developer toolkit for building, debugging, and interacting with applications on **Arc Mainnet** — Circle's EVM-compatible Layer 1 with USDC as the gas token and sub-second finality. Arc Testnet is fully supported too.
 
 **link to project**  https://arc-dev-kit-uxun.vercel.app/
 
-It solves the practical friction of building on Arc: USDC gas accounting, PoA middleware, ERC-20 monitoring, async agents, WebSocket streaming, and AI-assisted debugging — all packaged and ready to use.
+It solves the practical friction of building on Arc: network config (chain ID, RPC, explorer, contract addresses — no manual lookup needed), USDC's dual native/ERC-20 interface, PoA middleware, ERC-20 monitoring, async agents, WebSocket streaming, mainnet safety guardrails, and AI-assisted debugging — all packaged and ready to use.
 
 ---
 
 ## What is Arc?
 
-**Arc** is a Layer 1 blockchain by Circle (creators of USDC), designed for programmable payments and autonomous economic agents.
+**Arc** is a Layer 1 blockchain by Circle (creators of USDC), designed for programmable payments and autonomous economic agents. Mainnet launched 2026-09-16.
 
 | Feature | Detail |
 |---|---|
 | **EVM-compatible** | Solidity/web3.py/ethers.js work without modification |
-| **USDC as gas** | No ETH needed — all fees are paid in USDC |
+| **USDC as gas** | No ETH needed — USDC is the native gas token (18 decimals), also exposed as a synchronized ERC-20 view (6 decimals) |
 | **Malachite consensus** | Sub-second block finality |
 | **Circle Agent Stack** | Native infrastructure for AI economic agents |
-| **Chain ID** | `5042002` — Testnet RPC: `https://arc-testnet.drpc.org` |
+| **Mainnet** | Chain ID `5042` — RPC `https://rpc.mainnet.arc.io` — Explorer `https://explorer.arc.io` |
+| **Testnet** | Chain ID `5042002` — RPC `https://rpc.testnet.arc.io` — Explorer `https://explorer.testnet.arc.io` |
+
+See [docs/mainnet/NETWORK_CONFIG.md](docs/mainnet/NETWORK_CONFIG.md) for full, sourced network details.
 
 ---
 
-## Installation
+## Quickstart
 
 **Requires Python 3.11+**
 
@@ -37,7 +40,21 @@ It solves the practical friction of building on Arc: USDC gas accounting, PoA mi
 pip install arc-devkit
 ```
 
-### Minimal setup
+```python
+from arc_devkit import Arc
+
+arc = Arc.mainnet()  # or Arc.testnet() for development
+
+print(arc.network.name, arc.network.chain_id)
+print(arc.latest_block()["number"])
+
+tx = arc.get_transaction("0x...")
+report = arc.debug_transaction("0x...")
+```
+
+No manual RPC/chain-ID/contract lookup needed — everything above is pre-configured and verified (see [docs/mainnet/MIGRATION_AUDIT.md](docs/mainnet/MIGRATION_AUDIT.md) Part B for sources). Pass `rpc_url=` to `Arc.mainnet()`/`Arc.testnet()` to use your own provider (Alchemy, QuickNode, self-hosted).
+
+### CLI setup
 
 ```bash
 # 1. Copy example env
@@ -45,22 +62,27 @@ cp .env.example .env
 
 # 2. Fill in your keys
 #    ANTHROPIC_API_KEY  — from console.anthropic.com
-#    ARC_RPC_URL        — https://arc-testnet.drpc.org (or custom)
+#    ARC_NETWORK        — mainnet (default) or testnet
 #    ARC_PRIVATE_KEY    — optional; needed to send transactions
 
 # 3. Guided interactive setup (creates .env from scratch)
 arcdevkit init
 
-# 4. Verify connection
+# 4. Verify connection and network health
 arcdevkit status
+arcdevkit doctor
 ```
 
 ```
-Arc testnet: connected
-Chain ID:    5042002
-Latest block: 4821903
-Gas (USDC):  0.000021 USDC/tx
+Arc Mainnet
+Chain ID:      5042
+Current block: #21500000
+Gas price:     0.02 gwei
+
+⚠ Real funds — mainnet
 ```
+
+For development, set `ARC_NETWORK=testnet` in `.env` — see [docs/mainnet/MIGRATION_FROM_TESTNET.md](docs/mainnet/MIGRATION_FROM_TESTNET.md). (A per-command `--network` override flag is not implemented yet — see Known Limitations in the migration report.)
 
 ---
 
@@ -68,7 +90,7 @@ Gas (USDC):  0.000021 USDC/tx
 
 | Module | Package | What it does |
 |---|---|---|
-| **Dev Copilot** | `arc_devkit.copilot` | AI assistant (Claude) with Arc context built in |
+| **Dev Copilot** | `arc_devkit.copilot` | AI assistant (Claude, Gemini, GPT, or Ollama) with Arc context built in |
 | **Payment Agent** | `arc_devkit.agents` | Sign and broadcast USDC/native payments |
 | **Monitor Agent** | `arc_devkit.agents` | Watch wallets for balance changes and ERC-20 events |
 | **Async Monitor** | `arc_devkit.agents` | Async-native monitor for FastAPI / WebSocket use |
@@ -85,7 +107,16 @@ Gas (USDC):  0.000021 USDC/tx
 
 ## Dev Copilot
 
-AI assistant powered by Claude Sonnet, with Arc blockchain context embedded in the system prompt. Answers questions, generates code, explains Circle ecosystem concepts.
+AI assistant with Arc blockchain context embedded in the system prompt. Answers questions, generates code, explains Circle ecosystem concepts. Backed by a pluggable LLM provider — **Claude (Anthropic, default), Gemini (Google), GPT (OpenAI), or a local Ollama model** — selected globally via `COPILOT_PROVIDER` in `.env`:
+
+```dotenv
+COPILOT_PROVIDER=anthropic   # default — requires ANTHROPIC_API_KEY
+# COPILOT_PROVIDER=gemini    # requires pip install arc-devkit[gemini], GEMINI_API_KEY, GEMINI_MODEL
+# COPILOT_PROVIDER=openai    # requires pip install arc-devkit[openai], OPENAI_API_KEY, OPENAI_MODEL
+# COPILOT_PROVIDER=ollama    # local, no API key — requires OLLAMA_MODEL (already pulled) and a running Ollama server
+```
+
+`ask()`, `ask_stream()`, conversation history, response caching, offline mode, and image attachments work identically across all four providers. **Agentic tool-use mode (`run_agent()` / `arc ask --agent`) is Anthropic-only today** — it raises `NotImplementedError` with the other providers, since each has an incompatible tool-calling schema that hasn't been wired up yet. No model name is ever guessed for Gemini/OpenAI/Ollama — you set `GEMINI_MODEL`/`OPENAI_MODEL`/`OLLAMA_MODEL` explicitly, since a hardcoded default could silently point at a deprecated or non-existent model. See [`arc_devkit/copilot/providers/`](arc_devkit/copilot/providers/) for the provider abstraction.
 
 ### CLI
 
@@ -563,7 +594,8 @@ The primary entry point is `arcdevkit`, with commands grouped by domain.
 
 ```bash
 arcdevkit init                              # interactive .env wizard
-arcdevkit status                            # check testnet connection + block info
+arcdevkit status                            # check active network connection + block info
+arcdevkit doctor                            # health check: RPC, chain ID, USDC contract, explorer
 ```
 
 ### Config — manage `.env`
@@ -638,7 +670,7 @@ arcdevkit history --limit 25 --json
 arc_devkit/
 ├── config.py               # Settings from .env; validates required vars at import
 ├── core/
-│   ├── connection.py       # web3.py + ExtraDataToPOAMiddleware for Arc testnet
+│   ├── connection.py       # web3.py + ExtraDataToPOAMiddleware for Arc's validator model
 │   ├── wallet.py           # Wallet creation, balance queries
 │   └── gas.py              # USDC gas estimation
 ├── copilot/
@@ -688,7 +720,7 @@ pytest
 # Run a specific test
 pytest -k "test_copilot"
 
-# Integration tests (live Arc testnet + Anthropic API)
+# Integration tests (live Arc — mainnet or testnet per ARC_NETWORK — + Anthropic API)
 pytest -m integration
 
 # Lint and format
@@ -707,10 +739,11 @@ mkdocs serve
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `ANTHROPIC_API_KEY` | Yes | — | Anthropic API key (console.anthropic.com) |
-| `ARC_RPC_URL` | Yes | — | Arc RPC endpoint, comma-separated for multi-RPC failover |
+| `ARC_NETWORK` | No | `mainnet` | `mainnet` or `testnet` — selects RPC/chain ID/contract defaults |
+| `ARC_RPC_URL` | No | network default | Arc RPC endpoint override, comma-separated for multi-RPC failover |
 | `ARC_PRIVATE_KEY` | No | — | Wallet private key — required to send transactions |
 | `ANTHROPIC_MODEL` | No | `claude-sonnet-4-6` | Claude model to use |
-| `ARC_CHAIN_ID` | No | `5042002` | Arc chain ID |
+| `ARC_CHAIN_ID` | No | network default | Arc chain ID override |
 | `LOG_LEVEL` | No | `INFO` | Logging level |
 | `API_KEY` | No | — | REST API key — if unset, auth is disabled |
 
@@ -721,7 +754,7 @@ mkdocs serve
 | Pipeline | Trigger | What it does |
 |---|---|---|
 | `ci.yml` | Every push / PR | Lint (ruff) + unit tests on Python 3.11, 3.12, 3.13 + mypy |
-| `ci.yml` (integration job) | `main` branch | Runs `pytest -m integration` against the live Arc testnet |
+| `ci.yml` (integration job) | `main` branch | Runs `pytest -m integration` against live Arc RPCs (read-only) |
 | `publish.yml` | Push of `v*` tag | Builds wheel + sdist, publishes to PyPI, creates GitHub Release |
 
 ---
@@ -732,4 +765,4 @@ MIT — see [LICENSE](LICENSE) for details.
 
 ---
 
-> **Actively in development.** Arc DevKit targets Arc testnet (`chain_id=5042002`). Mainnet is expected summer 2026. The USDC contract address and some RPC features may change. Pin your version in production: `pip install arc-devkit==0.4.0`.
+> **Arc Mainnet is live** (launched 2026-09-16) and is Arc DevKit's default network as of v0.9.0. Arc Testnet remains fully supported for development (`ARC_NETWORK=testnet`). Some CCTP bridge details (attestation API support for Arc, V2 ABI) are not yet validated against live traffic — see [docs/mainnet/MAINNET_MIGRATION_REPORT.md](docs/mainnet/MAINNET_MIGRATION_REPORT.md) for known limitations. Pin your version in production: `pip install arc-devkit==0.9.0`.

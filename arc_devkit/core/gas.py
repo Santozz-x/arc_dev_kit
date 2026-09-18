@@ -101,13 +101,13 @@ def quote_fee(
     gas_price_gwei = Decimal(str(w3.from_wei(gas_price_wei, "gwei")))
 
     if token == "usdc":
-        from arc_devkit.stablecoins.token import (
-            _ERC20_ABI,
-            USDC_ARC_TESTNET_ADDRESS,
-            USDC_MULTIPLIER,
-        )
+        from arc_devkit.config import settings
+        from arc_devkit.stablecoins.token import _ERC20_ABI, USDC_MULTIPLIER
 
-        usdc_address = Web3.to_checksum_address(USDC_ARC_TESTNET_ADDRESS)
+        usdc_contract_address = settings.network.contracts.usdc
+        if usdc_contract_address is None:
+            raise ValueError(f"No USDC contract configured for network {settings.arc_network!r}.")
+        usdc_address = Web3.to_checksum_address(usdc_contract_address)
         contract = w3.eth.contract(address=usdc_address, abi=_ERC20_ABI)
         atomic = int(Decimal(str(amount)) * USDC_MULTIPLIER)
         gas_limit = 65_000  # conservative default for an ERC-20 transfer

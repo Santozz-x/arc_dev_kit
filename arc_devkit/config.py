@@ -36,6 +36,17 @@ class Settings:
     agent_allowed_recipients: tuple[str, ...] = ()
     cctp_attestation_api_url: str | None = None
     arc_llms_txt_url: str | None = None
+    # Dev Copilot LLM backend — see arc_devkit.copilot.providers. "anthropic"
+    # (the default) keeps ANTHROPIC_API_KEY required, same as before this was
+    # added; any other provider makes it optional and requires that
+    # provider's own key/model instead (no model name is ever guessed).
+    copilot_provider: str = "anthropic"
+    gemini_api_key: str | None = None
+    gemini_model: str | None = None
+    openai_api_key: str | None = None
+    openai_model: str | None = None
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str | None = None
 
     @property
     def is_production(self) -> bool:
@@ -81,6 +92,12 @@ def _load_settings() -> Settings:
     erros: list[str] = []
 
     api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+    copilot_provider = os.getenv("COPILOT_PROVIDER", "").strip().lower() or "anthropic"
+    gemini_api_key = os.getenv("GEMINI_API_KEY", "").strip() or None
+    gemini_model = os.getenv("GEMINI_MODEL", "").strip() or None
+    openai_api_key = os.getenv("OPENAI_API_KEY", "").strip() or None
+    openai_model = os.getenv("OPENAI_MODEL", "").strip() or None
+    ollama_model = os.getenv("OLLAMA_MODEL", "").strip() or None
 
     network_name = os.getenv("ARC_NETWORK", "").strip().lower() or DEFAULT_NETWORK
     try:
@@ -93,8 +110,26 @@ def _load_settings() -> Settings:
     rpc_url = os.getenv("ARC_RPC_URL", "").strip() or (profile.rpc_url or "")
     chain_id_raw = os.getenv("ARC_CHAIN_ID", "").strip()
 
-    if not api_key:
+    # ANTHROPIC_API_KEY is only mandatory when it's actually the active
+    # Copilot backend (the default) — COPILOT_PROVIDER=gemini/openai/ollama
+    # doesn't need it, but does need its own key/model (checked below).
+    if copilot_provider == "anthropic" and not api_key:
         erros.append("ANTHROPIC_API_KEY")
+    if copilot_provider == "gemini" and not gemini_api_key:
+        erros.append("GEMINI_API_KEY")
+    if copilot_provider == "gemini" and not gemini_model:
+        erros.append("GEMINI_MODEL")
+    if copilot_provider == "openai" and not openai_api_key:
+        erros.append("OPENAI_API_KEY")
+    if copilot_provider == "openai" and not openai_model:
+        erros.append("OPENAI_MODEL")
+    if copilot_provider == "ollama" and not ollama_model:
+        erros.append("OLLAMA_MODEL")
+    if copilot_provider not in ("anthropic", "gemini", "openai", "ollama"):
+        raise OSError(
+            f"\n\n  Unknown COPILOT_PROVIDER {copilot_provider!r}. "
+            "Supported: anthropic, gemini, openai, ollama.\n"
+        )
     if not rpc_url:
         erros.append("ARC_RPC_URL")
 
@@ -114,7 +149,17 @@ def _load_settings() -> Settings:
     # Support multiple comma-separated RPCs
     rpc_urls = tuple(u.strip() for u in rpc_url.split(",") if u.strip())
 
-    chain_id = int(chain_id_raw) if chain_id_raw else (profile.chain_id or 5042002)
+    if chain_id_raw:
+        chain_id = int(chain_id_raw)
+    elif profile.chain_id is not None:
+        chain_id = profile.chain_id
+    else:
+        # Never silently default to another network's chain ID — that would
+        # let a transaction get signed for the wrong chain without warning.
+        raise OSError(
+            f"\n\n  Network {network_name!r} has no default chain ID and ARC_CHAIN_ID "
+            "is not set.\n  Set ARC_CHAIN_ID explicitly in your .env.\n"
+        )
 
     # Private key resolution: env var > OS keyring > None (read-only mode)
     private_key = os.getenv("ARC_PRIVATE_KEY", "").strip() or _load_key_from_keyring()
@@ -138,6 +183,13 @@ def _load_settings() -> Settings:
         agent_allowed_recipients=whitelist,
         cctp_attestation_api_url=os.getenv("CCTP_ATTESTATION_API_URL", "").strip() or None,
         arc_llms_txt_url=os.getenv("ARC_LLMS_TXT_URL", "").strip() or None,
+        copilot_provider=copilot_provider,
+        gemini_api_key=gemini_api_key,
+        gemini_model=gemini_model,
+        openai_api_key=openai_api_key,
+        openai_model=openai_model,
+        ollama_base_url=os.getenv("OLLAMA_BASE_URL", "").strip() or "http://localhost:11434",
+        ollama_model=ollama_model,
     )
 
 
