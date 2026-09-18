@@ -23,7 +23,7 @@ web3==7.16.0
 eth-account==0.13.7
 
 # IA — SDK Anthropic
-anthropic==0.107.1
+anthropic==0.112.0
 
 # Utilitários
 python-dotenv==1.2.2
