@@ -168,6 +168,20 @@ export const i18n = {
     queriedAt: t('Consultado em', 'Queried at'),
     codeTitle: t('Código Python equivalente', 'Equivalent Python code'),
     installTitle: t('Instalação', 'Installation'),
+    recordingTitle: t(
+      'Gravação real: instalação até a consulta na mainnet',
+      'Real recording: install to a live mainnet query'
+    ),
+    recordingBody: t(
+      'Sessão de terminal genuína — ambiente virtual novo, pip install arc-devkit==0.10.0 do PyPI real, e execução real do script contra a Arc Mainnet. Nenhum trecho foi editado além de limitar tempo ocioso entre comandos.',
+      'A genuine terminal session — fresh virtual environment, pip install arc-devkit==0.10.0 from the real PyPI, and a real script run against Arc Mainnet. Nothing was edited besides capping idle time between commands.'
+    ),
+    recordingFallback: t(
+      'Seu navegador não suporta vídeo incorporado.',
+      'Your browser does not support embedded video.'
+    ),
+    recordingDownloadMp4: t('Baixar MP4', 'Download MP4'),
+    recordingDownloadCast: t('Baixar .cast (asciinema)', 'Download .cast (asciinema)'),
     historicalTitle: t('Referência histórica gravada', 'Recorded historical reference'),
     historicalBody: t(
       'Os valores abaixo foram registrados em uma execução real passada (ver a página de evidências da demonstração) — não são atualizados ao vivo. Use os controles acima para uma consulta ao vivo.',

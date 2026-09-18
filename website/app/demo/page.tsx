@@ -304,6 +304,38 @@ export default function DemoPage() {
             )}
           </Card>
 
+          {/* Recorded session video */}
+          <Card title={tr(d.recordingTitle, lang)} muted>
+            <p className="text-sm text-zinc-500 mb-4">{tr(d.recordingBody, lang)}</p>
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+            <video
+              controls
+              preload="metadata"
+              playsInline
+              className="w-full rounded-lg border border-zinc-800 bg-black"
+            >
+              <source src="/recording/arc_devkit_mainnet_demo.webm" type="video/webm" />
+              <source src="/recording/arc_devkit_mainnet_demo.mp4" type="video/mp4" />
+              {tr(d.recordingFallback, lang)}
+            </video>
+            <div className="mt-3 flex flex-wrap gap-4 text-xs">
+              <a
+                href="/recording/arc_devkit_mainnet_demo.mp4"
+                download
+                className="text-zinc-500 hover:text-zinc-300 underline underline-offset-2"
+              >
+                {tr(d.recordingDownloadMp4, lang)}
+              </a>
+              <a
+                href="/recording/arc_devkit_mainnet_demo.cast"
+                download
+                className="text-zinc-500 hover:text-zinc-300 underline underline-offset-2"
+              >
+                {tr(d.recordingDownloadCast, lang)}
+              </a>
+            </div>
+          </Card>
+
           {/* Historical reference */}
           <Card title={tr(d.historicalTitle, lang)} muted>
             <p className="text-sm text-zinc-500 mb-4">{tr(d.historicalBody, lang)}</p>
