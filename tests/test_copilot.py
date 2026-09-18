@@ -5,7 +5,10 @@ from unittest.mock import MagicMock, patch
 
 def test_ask_retorna_string_nao_vazia(mock_anthropic):
     """DevCopilot.ask() must return a non-empty string."""
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         copilot = DevCopilot()
@@ -17,7 +20,10 @@ def test_ask_retorna_string_nao_vazia(mock_anthropic):
 
 def test_ask_envia_system_prompt(mock_anthropic):
     """DevCopilot.ask() must include the system prompt in every call."""
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         copilot = DevCopilot()
@@ -34,7 +40,10 @@ def test_ask_envia_system_prompt(mock_anthropic):
 
 def test_ask_usa_modelo_correto(mock_anthropic):
     """DevCopilot.ask() must use the claude-sonnet-4-6 model."""
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         copilot = DevCopilot()
@@ -46,7 +55,10 @@ def test_ask_usa_modelo_correto(mock_anthropic):
 
 def test_ask_respeita_max_tokens(mock_anthropic):
     """DevCopilot.ask() must send max_tokens in the request."""
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         copilot = DevCopilot()
@@ -61,7 +73,10 @@ def test_ask_envia_prompt_do_usuario(mock_anthropic):
     """DevCopilot.ask() must send the user prompt in the messages list."""
     test_prompt = "How do I create a wallet on the Arc testnet?"
 
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         copilot = DevCopilot()
@@ -76,7 +91,10 @@ def test_ask_envia_prompt_do_usuario(mock_anthropic):
 
 def test_extra_context_injected_in_system_prompt(mock_anthropic):
     """extra_context is appended to the system prompt."""
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         copilot = DevCopilot(extra_context="Use only Solidity 0.8.x")
@@ -88,7 +106,10 @@ def test_extra_context_injected_in_system_prompt(mock_anthropic):
 
 def test_model_property_alias(mock_anthropic):
     """MODEL property returns same value as .model attribute."""
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         copilot = DevCopilot()
@@ -97,7 +118,10 @@ def test_model_property_alias(mock_anthropic):
 
 def test_ask_cache_hit_skips_api_call(mock_anthropic):
     """Second identical ask returns cached response without calling the API."""
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         copilot = DevCopilot()
@@ -117,7 +141,10 @@ def test_ask_stream_yields_chunks(mock_anthropic):
     stream_ctx.text_stream = iter(["Hello", " world", "!"])
     mock_anthropic.messages.stream.return_value = stream_ctx
 
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         copilot = DevCopilot()
@@ -128,7 +155,10 @@ def test_ask_stream_yields_chunks(mock_anthropic):
 
 def test_clear_history_empties_list(mock_anthropic):
     """clear_history() removes all messages from the conversation."""
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         copilot = DevCopilot()
@@ -142,7 +172,10 @@ def test_count_tokens_returns_int(mock_anthropic):
     """count_tokens() calls the API and returns token count."""
     mock_anthropic.messages.count_tokens.return_value = MagicMock(input_tokens=37)
 
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         copilot = DevCopilot()
@@ -153,7 +186,10 @@ def test_count_tokens_returns_int(mock_anthropic):
 
 def test_history_property_returns_copy(mock_anthropic):
     """history property returns a copy so external mutation doesn't affect state."""
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         copilot = DevCopilot()

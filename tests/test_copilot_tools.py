@@ -2,6 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
+import pytest
 from anthropic.types import TextBlock, ToolUseBlock
 
 from arc_devkit.copilot.tools import (
@@ -190,7 +191,10 @@ def test_run_agent_offline_returns_mock():
 def test_run_agent_without_tools_returns_direct_answer(mock_anthropic):
     mock_anthropic.messages.create.return_value = _make_text_message("Direct answer.")
 
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         result = DevCopilot().run_agent("hello")
@@ -208,7 +212,10 @@ def test_run_agent_executes_tool_then_answers(mock_anthropic, mock_web3):
 
     tool_calls_seen: list[tuple[str, dict]] = []
 
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         result = DevCopilot().run_agent(
@@ -233,7 +240,10 @@ def test_run_agent_circuit_breaker_stops_loop(mock_anthropic, mock_web3):
     # Model keeps asking for tools forever — the loop must stop at the limit
     mock_anthropic.messages.create.return_value = _make_tool_use_message("get_block_info", {})
 
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         result = DevCopilot().run_agent("loop forever", max_iterations=3)
@@ -249,10 +259,31 @@ def test_run_agent_tool_error_is_reported_to_model(mock_anthropic):
         _make_text_message("That address is invalid."),
     ]
 
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic", return_value=mock_anthropic):
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic",
+        return_value=mock_anthropic,
+    ):
         from arc_devkit.copilot.agent import DevCopilot
 
         result = DevCopilot().run_agent("check balance of 'invalid'")
 
     assert result["tool_calls"][0]["is_error"] is True
     assert result["response"] == "That address is invalid."
+
+
+def test_run_agent_raises_on_non_anthropic_provider():
+    """Tool-use mode is Anthropic-only today — other providers fail clearly."""
+    import dataclasses
+
+    from arc_devkit.config import settings as real_settings
+
+    fake_settings = dataclasses.replace(
+        real_settings, copilot_provider="ollama", ollama_model="llama3.2"
+    )
+
+    with patch("arc_devkit.config.settings", fake_settings):
+        from arc_devkit.copilot.agent import DevCopilot
+
+        copilot = DevCopilot()
+        with pytest.raises(NotImplementedError, match="anthropic"):
+            copilot.run_agent("what is my balance?")

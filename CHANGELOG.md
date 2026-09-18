@@ -6,6 +6,43 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.10.0] — 2026-09-18 — Multi-Provider Dev Copilot
+
+### Added
+
+- **Pluggable Dev Copilot backend** — `COPILOT_PROVIDER` env var selects
+  between `anthropic` (default, unchanged behavior), `gemini`, `openai`, or
+  `ollama` (local, no API key). New `arc_devkit.copilot.providers` package:
+  an `LLMProvider` ABC plus `AnthropicProvider`, `GeminiProvider` (requires
+  `pip install arc-devkit[gemini]`), `OpenAIProvider` (requires
+  `pip install arc-devkit[openai]`), and `OllamaProvider` (no extra
+  dependency — talks to a local Ollama server's REST API directly via the
+  existing `httpx` dependency).
+- `ask()`, `ask_stream()`, conversation history, response caching, offline
+  mode, and image attachments now work identically across all four
+  providers — `DevCopilot`'s public API is unchanged for existing callers.
+- No model name is ever guessed for Gemini/OpenAI/Ollama —
+  `GEMINI_MODEL`/`OPENAI_MODEL`/`OLLAMA_MODEL` must be set explicitly, since
+  a hardcoded default could silently point at a deprecated or non-existent
+  model (same "never guess, fail clear" convention already used for CCTP/
+  paymaster addresses elsewhere in this SDK).
+- `ANTHROPIC_API_KEY` is now only required when `COPILOT_PROVIDER=anthropic`
+  (the default) — using Gemini/OpenAI/Ollama exclusively no longer requires
+  an unused Anthropic key.
+
+### Known limitations
+
+- **Agentic tool-use mode (`run_agent()` / the read-only on-chain tool
+  loop) is Anthropic-only.** It raises `NotImplementedError` for the other
+  three providers — each has an incompatible tool-calling schema that
+  hasn't been implemented yet.
+- The Gemini and OpenAI providers' SDK usage was checked against the
+  actual installed `google-genai`/`openai` package signatures, but **no
+  live API call has been made from this code with a real API key** —
+  verify end-to-end before relying on them in production.
+
+---
+
 ## [0.9.0] — 2026-09-18 — Arc Mainnet Support
 
 Arc Mainnet launched 2026-09-16. This release makes it Arc DevKit's default,

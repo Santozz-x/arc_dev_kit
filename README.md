@@ -90,7 +90,7 @@ For development, set `ARC_NETWORK=testnet` in `.env` — see [docs/mainnet/MIGRA
 
 | Module | Package | What it does |
 |---|---|---|
-| **Dev Copilot** | `arc_devkit.copilot` | AI assistant (Claude) with Arc context built in |
+| **Dev Copilot** | `arc_devkit.copilot` | AI assistant (Claude, Gemini, GPT, or Ollama) with Arc context built in |
 | **Payment Agent** | `arc_devkit.agents` | Sign and broadcast USDC/native payments |
 | **Monitor Agent** | `arc_devkit.agents` | Watch wallets for balance changes and ERC-20 events |
 | **Async Monitor** | `arc_devkit.agents` | Async-native monitor for FastAPI / WebSocket use |
@@ -107,7 +107,16 @@ For development, set `ARC_NETWORK=testnet` in `.env` — see [docs/mainnet/MIGRA
 
 ## Dev Copilot
 
-AI assistant powered by Claude Sonnet, with Arc blockchain context embedded in the system prompt. Answers questions, generates code, explains Circle ecosystem concepts.
+AI assistant with Arc blockchain context embedded in the system prompt. Answers questions, generates code, explains Circle ecosystem concepts. Backed by a pluggable LLM provider — **Claude (Anthropic, default), Gemini (Google), GPT (OpenAI), or a local Ollama model** — selected globally via `COPILOT_PROVIDER` in `.env`:
+
+```dotenv
+COPILOT_PROVIDER=anthropic   # default — requires ANTHROPIC_API_KEY
+# COPILOT_PROVIDER=gemini    # requires pip install arc-devkit[gemini], GEMINI_API_KEY, GEMINI_MODEL
+# COPILOT_PROVIDER=openai    # requires pip install arc-devkit[openai], OPENAI_API_KEY, OPENAI_MODEL
+# COPILOT_PROVIDER=ollama    # local, no API key — requires OLLAMA_MODEL (already pulled) and a running Ollama server
+```
+
+`ask()`, `ask_stream()`, conversation history, response caching, offline mode, and image attachments work identically across all four providers. **Agentic tool-use mode (`run_agent()` / `arc ask --agent`) is Anthropic-only today** — it raises `NotImplementedError` with the other providers, since each has an incompatible tool-calling schema that hasn't been wired up yet. No model name is ever guessed for Gemini/OpenAI/Ollama — you set `GEMINI_MODEL`/`OPENAI_MODEL`/`OLLAMA_MODEL` explicitly, since a hardcoded default could silently point at a deprecated or non-existent model. See [`arc_devkit/copilot/providers/`](arc_devkit/copilot/providers/) for the provider abstraction.
 
 ### CLI
 

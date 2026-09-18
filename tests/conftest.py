@@ -65,7 +65,9 @@ def mock_anthropic():
     Replaces anthropic.Anthropic with a MagicMock that returns a
     simulated response without consuming API credits.
     """
-    with patch("arc_devkit.copilot.agent.anthropic.Anthropic") as MockAnthropic:
+    with patch(
+        "arc_devkit.copilot.providers.anthropic_provider.anthropic.Anthropic"
+    ) as MockAnthropic:
         instance = MagicMock()
 
         # Simulate real response structure with a proper TextBlock instance
