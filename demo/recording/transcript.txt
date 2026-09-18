@@ -1,0 +1,320 @@
+HEADER: {'version': 2, 'width': 100, 'height': 32, 'timestamp': 1789754272, 'idle_time_limit': 2.0, 'env': {'SHELL': '/bin/bash', 'TERM': 'xterm-ghostty'}, 'title': 'Arc DevKit — Arc Mainnet Live Demo'}
+--- FULL OUTPUT ---
+[H[2J[3JArc DevKit — Mainnet Demo: from a fresh venv to a live Arc Mainnet query
+==========================================================================
+
+[1;32m$[0m [1mpython3 --version[0m
+Python 3.14.7
+
+[1;32m$[0m [1mpython3 -m venv .venv[0m
+
+[1;32m$[0m [1msource .venv/bin/activate[0m
+
+[1;32m$[0m [1mpip install --quiet --upgrade pip[0m
+
+[1;32m$[0m [1mpip install arc-devkit==0.10.0[0m
+Collecting arc-devkit==0.10.0
+  Downloading arc_devkit-0.10.0-py3-none-any.whl.metadata (28 kB)
+Collecting typer>=0.12 (from typer[all]>=0.12->arc-devkit==0.10.0)
+  Downloading typer-0.27.2-py3-none-any.whl.metadata (16 kB)
+Collecting rich>=13.7 (from arc-devkit==0.10.0)
+  Downloading rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+Collecting fastapi>=0.115 (from arc-devkit==0.10.0)
+  Downloading fastapi-0.141.1-py3-none-any.whl.metadata (27 kB)
+Collecting uvicorn>=0.30 (from uvicorn[standard]>=0.30->arc-devkit==0.10.0)
+  Downloading uvicorn-0.53.0-py3-none-any.whl.metadata (6.6 kB)
+Collecting slowapi>=0.1.9 (from arc-devkit==0.10.0)
+  Downloading slowapi-0.1.10-py3-none-any.whl.metadata (3.3 kB)
+Collecting sse-starlette>=2.1 (from arc-devkit==0.10.0)
+  Downloading sse_starlette-3.4.11-py3-none-any.whl.metadata (15 kB)
+Collecting web3>=7.0 (from arc-devkit==0.10.0)
+  Downloading web3-8.0.0-py3-none-any.whl.metadata (3.7 kB)
+Collecting anthropic>=0.40 (from arc-devkit==0.10.0)
+  Downloading anthropic-1.7.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting python-dotenv>=1.0 (from arc-devkit==0.10.0)
+  Downloading python_dotenv-1.2.3-py3-none-any.whl.metadata (29 kB)
+Collecting httpx>=0.27 (from arc-devkit==0.10.0)
+  Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+Collecting tenacity>=8.0 (from arc-devkit==0.10.0)
+  Downloading tenacity-9.1.4-py3-none-any.whl.metadata (1.2 kB)
+Collecting anyio<5,>=4.1.0 (from anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading anyio-4.15.1-py3-none-any.whl.metadata (4.7 kB)
+Collecting docstring-parser<1,>=0.15 (from anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading docstring_parser-0.18.0-py3-none-any.whl.metadata (3.5 kB)
+Collecting httpx2<3,>=2.0.0 (from anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading httpx2-2.13.0-py3-none-any.whl.metadata (10 kB)
+Collecting jiter<1,>=0.4.0 (from anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading jiter-0.17.0-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.2 kB)
+Collecting pydantic<3,>=1.10.0 (from anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading pydantic-2.13.5-py3-none-any.whl.metadata (110 kB)
+Collecting sniffio<2,>=1 (from anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+Collecting typing-extensions<5,>=4.14 (from anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting idna>=2.8 (from anyio<5,>=4.1.0->anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+Collecting httpcore2==2.13.0 (from httpx2<3,>=2.0.0->anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading httpcore2-2.13.0-py3-none-any.whl.metadata (26 kB)
+Collecting truststore>=0.10 (from httpx2<3,>=2.0.0->anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading truststore-0.10.4-py3-none-any.whl.metadata (4.4 kB)
+Collecting h11>=0.16 (from httpcore2==2.13.0->httpx2<3,>=2.0.0->anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+Collecting annotated-types>=0.6.0 (from pydantic<3,>=1.10.0->anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+Collecting pydantic-core==2.46.5 (from pydantic<3,>=1.10.0->anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading pydantic_core-2.46.5-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.6 kB)
+Collecting typing-inspection>=0.4.2 (from pydantic<3,>=1.10.0->anthropic>=0.40->arc-devkit==0.10.0)
+  Downloading typing_inspection-0.4.4-py3-none-any.whl.metadata (2.6 kB)
+Collecting starlette>=0.46.0 (from fastapi>=0.115->arc-devkit==0.10.0)
+  Downloading starlette-1.6.0-py3-none-any.whl.metadata (6.4 kB)
+Collecting annotated-doc>=0.0.2 (from fastapi>=0.115->arc-devkit==0.10.0)
+  Downloading annotated_doc-0.0.5-py3-none-any.whl.metadata (6.5 kB)
+Collecting certifi (from httpx>=0.27->arc-devkit==0.10.0)
+  Downloading certifi-2026.7.22-py3-none-any.whl.metadata (2.5 kB)
+Collecting httpcore==1.* (from httpx>=0.27->arc-devkit==0.10.0)
+  Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+Collecting markdown-it-py>=2.2.0 (from rich>=13.7->arc-devkit==0.10.0)
+  Downloading markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+Collecting pygments<3.0.0,>=2.13.0 (from rich>=13.7->arc-devkit==0.10.0)
+  Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=13.7->arc-devkit==0.10.0)
+  Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+Collecting limits>=2.3 (from slowapi>=0.1.9->arc-devkit==0.10.0)
+  Downloading limits-5.8.0-py3-none-any.whl.metadata (10 kB)
+Collecting deprecated>=1.2 (from limits>=2.3->slowapi>=0.1.9->arc-devkit==0.10.0)
+  Downloading deprecated-1.3.1-py2.py3-none-any.whl.metadata (5.9 kB)
+Collecting packaging>=21 (from limits>=2.3->slowapi>=0.1.9->arc-devkit==0.10.0)
+  Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+Collecting wrapt<3,>=1.10 (from deprecated>=1.2->limits>=2.3->slowapi>=0.1.9->arc-devkit==0.10.0)
+  Downloading wrapt-2.4.1-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (7.4 kB)
+Collecting shellingham>=1.3.0 (from typer>=0.12->typer[all]>=0.12->arc-devkit==0.10.0)
+  Downloading shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+[33mWARNING: typer 0.27.2 does not provide the extra 'all'[0m[33m
+[0mCollecting click>=7.0 (from uvicorn>=0.30->uvicorn[standard]>=0.30->arc-devkit==0.10.0)
+  Downloading click-8.5.0-py3-none-any.whl.metadata (2.6 kB)
+Collecting httptools>=0.8.0 (from uvicorn[standard]>=0.30->arc-devkit==0.10.0)
+  Downloading httptools-0.8.0-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (3.5 kB)
+Collecting pyyaml>=5.1 (from uvicorn[standard]>=0.30->arc-devkit==0.10.0)
+  Downloading pyyaml-6.0.3-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+Collecting uvloop>=0.15.1 (from uvicorn[standard]>=0.30->arc-devkit==0.10.0)
+  Downloading uvloop-0.22.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (4.9 kB)
+Collecting watchfiles>=0.20 (from uvicorn[standard]>=0.30->arc-devkit==0.10.0)
+  Downloading watchfiles-1.2.0-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+Collecting websockets>=13.0 (from uvicorn[standard]>=0.30->arc-devkit==0.10.0)
+  Downloading websockets-17.1-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.3 kB)
+Collecting aiohttp>=3.7.4.post0 (from web3>=7.0->arc-devkit==0.10.0)
+  Downloading aiohttp-3.14.3-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.3 kB)
+Collecting eth-abi>=6 (from web3>=7.0->arc-devkit==0.10.0)
+  Downloading eth_abi-6.0.0-py3-none-any.whl.metadata (2.4 kB)
+Collecting eth-account>=0.14 (from web3>=7.0->arc-devkit==0.10.0)
+  Downloading eth_account-0.14.0-py3-none-any.whl.metadata (2.4 kB)
+Collecting eth-hash>=0.5.1 (from eth-hash[pycryptodome]>=0.5.1->web3>=7.0->arc-devkit==0.10.0)
+  Downloading eth_hash-0.8.0-py3-none-any.whl.metadata (4.1 kB)
+Collecting eth-typing>=5.0.0 (from web3>=7.0->arc-devkit==0.10.0)
+  Downloading eth_typing-6.0.0-py3-none-any.whl.metadata (3.1 kB)
+Collecting eth-utils>=5.3.0 (from web3>=7.0->arc-devkit==0.10.0)
+  Downloading eth_utils-6.0.0-py3-none-any.whl.metadata (5.6 kB)
+Collecting hexbytes>=2 (from web3>=7.0->arc-devkit==0.10.0)
+  Downloading hexbytes-2.0.0-py3-none-any.whl.metadata (2.1 kB)
+Collecting pyunormalize>=15 (from web3>=7.0->arc-devkit==0.10.0)
+  Downloading pyunormalize-17.0.0-py3-none-any.whl.metadata (5.7 kB)
+Collecting requests>=2.23.0 (from web3>=7.0->arc-devkit==0.10.0)
+  Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+Collecting aiohappyeyeballs>=2.5.0 (from aiohttp>=3.7.4.post0->web3>=7.0->arc-devkit==0.10.0)
+  Downloading aiohappyeyeballs-2.7.1-py3-none-any.whl.metadata (5.9 kB)
+Collecting aiosignal>=1.4.0 (from aiohttp>=3.7.4.post0->web3>=7.0->arc-devkit==0.10.0)
+  Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+Collecting attrs>=17.3.0 (from aiohttp>=3.7.4.post0->web3>=7.0->arc-devkit==0.10.0)
+  Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+Collecting frozenlist>=1.1.1 (from aiohttp>=3.7.4.post0->web3>=7.0->arc-devkit==0.10.0)
+  Downloading frozenlist-1.8.0-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (20 kB)
+Collecting multidict<7.0,>=4.5 (from aiohttp>=3.7.4.post0->web3>=7.0->arc-devkit==0.10.0)
+  Downloading multidict-6.9.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+Collecting propcache>=0.2.0 (from aiohttp>=3.7.4.post0->web3>=7.0->arc-devkit==0.10.0)
+  Downloading propcache-0.5.4-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (25 kB)
+Collecting yarl<2.0,>=1.17.0 (from aiohttp>=3.7.4.post0->web3>=7.0->arc-devkit==0.10.0)
+  Downloading yarl-1.25.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (111 kB)
+Collecting parsimonious<0.11.0,>=0.10.0 (from eth-abi>=6->web3>=7.0->arc-devkit==0.10.0)
+  Downloading parsimonious-0.10.0-py3-none-any.whl.metadata (25 kB)
+Collecting regex>=2022.3.15 (from parsimonious<0.11.0,>=0.10.0->eth-abi>=6->web3>=7.0->arc-devkit==0.10.0)
+  Downloading regex-2026.9.10-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+Collecting bitarray>=2.4 (from eth-account>=0.14->web3>=7.0->arc-devkit==0.10.0)
+  Downloading bitarray-3.11.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (38 kB)
+Collecting eth-keyfile>=0.10 (from eth-account>=0.14->web3>=7.0->arc-devkit==0.10.0)
+  Downloading eth_keyfile-0.10.0-py3-none-any.whl.metadata (9.8 kB)
+Collecting eth-keys>=0.5 (from eth-account>=0.14->web3>=7.0->arc-devkit==0.10.0)
+  Downloading eth_keys-0.8.0-py3-none-any.whl.metadata (12 kB)
+Collecting eth-rlp>=3 (from eth-account>=0.14->web3>=7.0->arc-devkit==0.10.0)
+  Downloading eth_rlp-3.0.0-py3-none-any.whl.metadata (2.2 kB)
+Collecting rlp>=2 (from eth-account>=0.14->web3>=7.0->arc-devkit==0.10.0)
+  Downloading rlp-5.0.0-py3-none-any.whl.metadata (2.1 kB)
+Collecting ckzg>=2 (from eth-account>=0.14->web3>=7.0->arc-devkit==0.10.0)
+  Downloading ckzg-2.1.8-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (887 bytes)
+Collecting pycryptodome<4,>=3.6.6 (from eth-hash[pycryptodome]>=0.5.1->web3>=7.0->arc-devkit==0.10.0)
+  Downloading pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.4 kB)
+Collecting py_ecc>=5.2.0 (from eth-keyfile>=0.10->eth-account>=0.14->web3>=7.0->arc-devkit==0.10.0)
+  Downloading py_ecc-8.0.0-py3-none-any.whl.metadata (3.1 kB)
+Collecting cytoolz>=0.10.1 (from eth-utils>=5.3.0->web3>=7.0->arc-devkit==0.10.0)
+  Downloading cytoolz-1.1.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.2 kB)
+Collecting toolz>=0.8.0 (from cytoolz>=0.10.1->eth-utils>=5.3.0->web3>=7.0->arc-devkit==0.10.0)
+  Downloading toolz-1.1.0-py3-none-any.whl.metadata (5.1 kB)
+Collecting charset_normalizer<4,>=2 (from requests>=2.23.0->web3>=7.0->arc-devkit==0.10.0)
+  Downloading charset_normalizer-3.5.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (45 kB)
+Collecting urllib3<3,>=1.26 (from requests>=2.23.0->web3>=7.0->arc-devkit==0.10.0)
+  Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+Downloading arc_devkit-0.10.0-py3-none-any.whl (158 kB)
+Downloading anthropic-1.7.0-py3-none-any.whl (1.3 MB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/1.3 MB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;5;70m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m1.3/1.3 MB[0m [31m32.0 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading anyio-4.15.1-py3-none-any.whl (132 kB)
+Downloading docstring_parser-0.18.0-py3-none-any.whl (22 kB)
+Downloading httpx2-2.13.0-py3-none-any.whl (95 kB)
+Downloading httpcore2-2.13.0-py3-none-any.whl (83 kB)
+Downloading jiter-0.17.0-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (345 kB)
+Downloading pydantic-2.13.5-py3-none-any.whl (472 kB)
+Downloading pydantic_core-2.46.5-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/2.1 MB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;5;70m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m2.1/2.1 MB[0m [31m43.6 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+Downloading fastapi-0.141.1-py3-none-any.whl (131 kB)
+Downloading annotated_doc-0.0.5-py3-none-any.whl (5.3 kB)
+Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+Downloading idna-3.20-py3-none-any.whl (69 kB)
+Downloading python_dotenv-1.2.3-py3-none-any.whl (22 kB)
+Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/1.3 MB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;5;70m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m1.3/1.3 MB[0m [31m47.6 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Downloading slowapi-0.1.10-py3-none-any.whl (14 kB)
+Downloading limits-5.8.0-py3-none-any.whl (60 kB)
+Downloading deprecated-1.3.1-py2.py3-none-any.whl (11 kB)
+Downloading wrapt-2.4.1-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (237 kB)
+Downloading packaging-26.3-py3-none-any.whl (129 kB)
+Downloading sse_starlette-3.4.11-py3-none-any.whl (17 kB)
+Downloading starlette-1.6.0-py3-none-any.whl (75 kB)
+Downloading tenacity-9.1.4-py3-none-any.whl (28 kB)
+Downloading truststore-0.10.4-py3-none-any.whl (18 kB)
+Downloading typer-0.27.2-py3-none-any.whl (123 kB)
+Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+Downloading typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+Downloading uvicorn-0.53.0-py3-none-any.whl (87 kB)
+Downloading click-8.5.0-py3-none-any.whl (125 kB)
+Downloading httptools-0.8.0-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (481 kB)
+Downloading pyyaml-6.0.3-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (794 kB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/794.2 kB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;5;70m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m794.2/794.2 kB[0m [31m50.4 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading uvloop-0.22.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.3 MB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/4.3 MB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;5;70m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m4.3/4.3 MB[0m [31m48.2 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading watchfiles-1.2.0-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (453 kB)
+Downloading web3-8.0.0-py3-none-any.whl (1.4 MB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/1.4 MB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;5;70m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m1.4/1.4 MB[0m [31m51.4 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading aiohttp-3.14.3-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.8 MB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/1.8 MB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;5;70m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m1.8/1.8 MB[0m [31m42.9 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading multidict-6.9.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (314 kB)
+Downloading yarl-1.25.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (117 kB)
+Downloading aiohappyeyeballs-2.7.1-py3-none-any.whl (15 kB)
+Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+Downloading eth_abi-6.0.0-py3-none-any.whl (53 kB)
+Downloading parsimonious-0.10.0-py3-none-any.whl (48 kB)
+Downloading eth_account-0.14.0-py3-none-any.whl (586 kB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/586.3 kB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;5;70m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m586.3/586.3 kB[0m [31m55.9 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading bitarray-3.11.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (385 kB)
+Downloading ckzg-2.1.8-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (176 kB)
+Downloading eth_hash-0.8.0-py3-none-any.whl (8.0 kB)
+Downloading pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.3 MB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/2.3 MB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;5;70m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m2.3/2.3 MB[0m [31m51.9 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading eth_keyfile-0.10.0-py3-none-any.whl (9.5 kB)
+Downloading eth_keys-0.8.0-py3-none-any.whl (20 kB)
+Downloading eth_rlp-3.0.0-py3-none-any.whl (15 kB)
+Downloading eth_typing-6.0.0-py3-none-any.whl (19 kB)
+Downloading eth_utils-6.0.0-py3-none-any.whl (102 kB)
+Downloading cytoolz-1.1.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (2.8 MB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/2.8 MB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;5;70m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m2.8/2.8 MB[0m [31m56.5 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading frozenlist-1.8.0-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (231 kB)
+Downloading hexbytes-2.0.0-py3-none-any.whl (18 kB)
+Downloading propcache-0.5.4-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (232 kB)
+Downloading py_ecc-8.0.0-py3-none-any.whl (47 kB)
+Downloading pyunormalize-17.0.0-py3-none-any.whl (51 kB)
+Downloading regex-2026.9.10-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (803 kB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/803.7 kB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;5;70m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m803.7/803.7 kB[0m [31m48.5 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading requests-2.34.2-py3-none-any.whl (73 kB)
+Downloading charset_normalizer-3.5.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (251 kB)
+Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+Downloading certifi-2026.7.22-py3-none-any.whl (136 kB)
+Downloading rlp-5.0.0-py3-none-any.whl (19 kB)
+Downloading toolz-1.1.0-py3-none-any.whl (58 kB)
+Downloading websockets-17.1-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (224 kB)
+Installing collected packages: ckzg, wrapt, websockets, uvloop, urllib3, typing-extensions, truststore, toolz, tenacity, sniffio, shellingham, regex, pyyaml, pyunormalize, python-dotenv, pygments, pycryptodome, propcache, packaging, multidict, mdurl, jiter, idna, httptools, hexbytes, h11, frozenlist, eth-hash, docstring-parser, click, charset_normalizer, certifi, bitarray, attrs, annotated-types, annotated-doc, aiohappyeyeballs, yarl, uvicorn, typing-inspection, requests, pydantic-core, parsimonious, markdown-it-py, httpcore2, httpcore, eth-typing, deprecated, cytoolz, anyio, aiosignal, watchfiles, starlette, rich, pydantic, limits, httpx2, httpx, aiohttp, typer, sse-starlette, slowapi, fastapi, eth-utils, anthropic, rlp, py_ecc, eth-keys, eth-abi, eth-rlp, eth-keyfile, eth-account, web3, arc-devkit
+[?25l[2K   [38;5;197m━[0m[38;5;197m╸[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m 3/74[0m [uvloop][2K   [38;5;197m━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m 7/74[0m [toolz][2K   [38;5;197m━━━━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m13/74[0m [pyunormalize][2K   [38;5;197m━━━━━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m15/74[0m [pygments][2K   [38;5;197m━━━━━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m15/74[0m [pygments][2K   [38;5;197m━━━━━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m15/74[0m [pygments][2K   [38;5;197m━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m16/74[0m [pycryptodome][2K   [38;5;197m━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m16/74[0m [pycryptodome][2K   [38;5;197m━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m16/74[0m [pycryptodome][2K   [38;5;197m━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m25/74[0m [h11][2K   [38;5;197m━━━━━━━━━━━━━━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━[0m [32m32/74[0m [bitarray][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━━━━━━━━━━━━━━[0m [32m40/74[0m [requests][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━━━━━━━━━━━━[0m [32m44/74[0m [httpcore2][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━━━━━━━━[0m [32m49/74[0m [anyio][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━━━━━━[0m [32m52/74[0m [starlette][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━━━━━━━[0m [32m53/74[0m [rich][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━━━━━[0m [32m54/74[0m [pydantic][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━━━━━━[0m [32m55/74[0m [limits][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━━━[0m [32m58/74[0m [aiohttp][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━━━━[0m [32m59/74[0m [typer][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━━[0m [32m62/74[0m [fastapi][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━[0m [32m64/74[0m [anthropic][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━[0m [32m64/74[0m [anthropic][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━[0m [32m64/74[0m [anthropic][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━━━[0m [32m64/74[0m [anthropic][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━━━[0m [32m68/74[0m [eth-abi][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;197m╸[0m[38;5;237m━[0m [32m72/74[0m [web3][2K   [38;5;197m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;237m╺[0m [32m73/74[0m [arc-devkit][2K   [38;5;70m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m74/74[0m [arc-devkit]
+[?25h[1A[2KSuccessfully installed aiohappyeyeballs-2.7.1 aiohttp-3.14.3 aiosignal-1.4.0 annotated-doc-0.0.5 annotated-types-0.8.0 anthropic-1.7.0 anyio-4.15.1 arc-devkit-0.10.0 attrs-26.1.0 bitarray-3.11.0 certifi-2026.7.22 charset_normalizer-3.5.1 ckzg-2.1.8 click-8.5.0 cytoolz-1.1.0 deprecated-1.3.1 docstring-parser-0.18.0 eth-abi-6.0.0 eth-account-0.14.0 eth-hash-0.8.0 eth-keyfile-0.10.0 eth-keys-0.8.0 eth-rlp-3.0.0 eth-typing-6.0.0 eth-utils-6.0.0 fastapi-0.141.1 frozenlist-1.8.0 h11-0.16.0 hexbytes-2.0.0 httpcore-1.0.9 httpcore2-2.13.0 httptools-0.8.0 httpx-0.28.1 httpx2-2.13.0 idna-3.20 jiter-0.17.0 limits-5.8.0 markdown-it-py-4.2.0 mdurl-0.1.2 multidict-6.9.0 packaging-26.3 parsimonious-0.10.0 propcache-0.5.4 py_ecc-8.0.0 pycryptodome-3.23.0 pydantic-2.13.5 pydantic-core-2.46.5 pygments-2.21.0 python-dotenv-1.2.3 pyunormalize-17.0.0 pyyaml-6.0.3 regex-2026.9.10 requests-2.34.2 rich-15.0.0 rlp-5.0.0 shellingham-1.5.4 slowapi-0.1.10 sniffio-1.3.1 sse-starlette-3.4.11 starlette-1.6.0 tenacity-9.1.4 toolz-1.1.0 truststore-0.10.4 typer-0.27.2 typing-extensions-4.16.0 typing-inspection-0.4.4 urllib3-2.8.0 uvicorn-0.53.0 uvloop-0.22.1 watchfiles-1.2.0 web3-8.0.0 websockets-17.1 wrapt-2.4.1 yarl-1.25.1
+
+[1;32m$[0m [1mpython3 -c "import arc_devkit; print('arc-devkit', arc_devkit.__version__)"[0m
+arc-devkit 0.10.0
+
+[1;32m$[0m [1mpython3 -c "import arc_devkit.client; print(arc_devkit.client.__file__)"[0m
+/tmp/arc-devkit-mainnet-demo/workdir/.venv/lib/python3.14/site-packages/arc_devkit/client.py
+
+[1;32m$[0m [1mpython3 mainnet_demo.py[0m
+======================================================================
+Arc DevKit — Arc Mainnet Live Demo
+Read-only. Public data only. No wallet, no signing, no .env loaded.
+======================================================================
+
+SDK network config : mainnet
+Expected chain ID  : 5042
+RPC endpoint       : https://rpc.mainnet.arc.io
+Explorer           : https://explorer.arc.io
+
+--- 1. Health check (arc.health_check()) ------------------------
+  rpc_ok              : True
+  rpc_chain_id        : 5042
+  expected_chain_id   : 5042
+  chain_id_match      : True
+  latency_ms          : 697.8
+  usdc_contract_ok    : True
+  explorer_configured : True
+  ready               : True
+  -> RPC-reported chain ID matches arc_devkit.networks config: CONFIRMED
+
+--- 2. Latest block (arc.latest_block()) ------------------------
+  Number    : #21,537,082
+  Hash      : 0xd5b78a693ccb74ba0a751e4143b5d27b777e0b0b9b46bca713952634304b06bb
+  Timestamp : 2026-09-18T17:58:20+00:00 (unix 1789754300)
+  Tx count  : 20
+
+--- 3. Scanning the last 30 blocks for a confirmed transaction --
+  Found: 0x66805e7addc8884e80260a7a4abfad144f37341cd323b3327e93ea2cfbc23ceb
+
+--- 4. Transaction (arc.get_transaction() / get_transaction_receipt()) -
+  Hash                              : 0x66805e7addc8884e80260a7a4abfad144f37341cd323b3327e93ea2cfbc23ceb
+  Status                            : success
+  Block                             : #21,537,082
+  From                              : 0x9304Dd29F7fcDF245C05c92A20aCa5f647fd8783
+  To                                : 0x53DeA4f7783c1De84CEcC5C989bc37a557154827
+  Value  (native USDC, 18 decimals) : 750 USDC
+  Gas used                          : 310,369
+  Gas cost (native USDC, 18 decimals): 0.01551845 USDC
+  Explorer                          : https://explorer.arc.io/tx/0x66805e7addc8884e80260a7a4abfad144f37341cd323b3327e93ea2cfbc23ceb
+
+  Decoded 1 USDC ERC-20 Transfer log(s) (contract 0x3600000000000000000000000000000000000000, 6 decimals — a separate view of the
+  same underlying USDC balance shown above at 18 decimals natively):
+    0x53dea4f7783c1de84cecc5c989bc37a557154827 -> 0x8366a39cc670b4001a1121b8f6a443a643e40951: 742.5 USDC (6 decimals)
+
+--- 5. Debugger analysis (arc.debug_transaction(tx_hash, use_ai=False)) -
+  Network       : Arc Mainnet
+  Status        : success
+  Cost (USDC)   : 0.01551845
+  Revert reason : None
+  Summary       : Status: success | Gas used: 310369 | Cost: 0.01551845 USDC
+
+======================================================================
+Done. Every value above was read live from Arc Mainnet via arc-devkit.
+Verify independently: https://explorer.arc.io/tx/0x66805e7addc8884e80260a7a4abfad144f37341cd323b3327e93ea2cfbc23ceb
+======================================================================
+
+==========================================================================
+Session complete.
+

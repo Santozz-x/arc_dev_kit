@@ -32,6 +32,7 @@ export function Header({ onMenuToggle, menuOpen }: HeaderProps) {
           <NavLink href="/docs/getting-started">{tr(i18n.nav.quickstart, lang)}</NavLink>
           <NavLink href="/docs/rest-api">{tr(i18n.nav.api, lang)}</NavLink>
           <NavLink href="/docs/cookbook">{tr(i18n.nav.cookbook, lang)}</NavLink>
+          <NavLink href="/demo">{tr(i18n.nav.demo, lang)}</NavLink>
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -62,7 +63,7 @@ export function Header({ onMenuToggle, menuOpen }: HeaderProps) {
 
           <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-arc-500/20 border border-arc-500/30 text-arc-300 text-xs font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-arc-400 animate-pulse" />
-            v0.4.0
+            v0.10.0
           </span>
 
           <a

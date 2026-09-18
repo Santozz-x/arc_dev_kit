@@ -7,6 +7,7 @@ Arc DevKit is an open-source developer toolkit for building, debugging, and inte
 - **[GETTING_STARTED.md](GETTING_STARTED.md)** — install, configure, and run your first mainnet read in under five minutes.
 - **[NETWORK_CONFIG.md](NETWORK_CONFIG.md)** — chain IDs, RPC/WS URLs, explorers, and every contract address, each with its official source.
 - **[SECURITY.md](SECURITY.md)** — read this before sending your first real transaction.
+- **[MAINNET_DEMO.md](MAINNET_DEMO.md)** — real, reproducible evidence: install-to-use tutorial, a genuine recorded terminal session, and a live-queryable transaction from Arc Mainnet.
 
 ## Reference
 

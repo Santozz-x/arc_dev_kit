@@ -1,0 +1,27 @@
+# Example deploy config for the Arc DevKit Mainnet Demo API on Render
+# (https://render.com — a free/low-cost host for small Python services).
+# This is a template, not an active deployment: it has not been applied to
+# any Render account by this work. Provided so an operator with Render
+# access can deploy the backend with `render blueprint launch` or via the
+# dashboard's "New Blueprint" flow pointed at this repository.
+#
+# Any other container host (Fly.io, Railway, a plain VM, etc.) works too —
+# see demo/Dockerfile and demo/README.md for the generic instructions.
+
+services:
+  - type: web
+    name: arc-devkit-demo-api
+    runtime: docker
+    dockerfilePath: ./demo/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /demo/status
+    envVars:
+      # Public: the exact origin(s) of the docs site(s) allowed to call this
+      # API. Set to your deployed website's real origin — never "*".
+      - key: DEMO_ALLOWED_ORIGINS
+        value: https://your-docs-site.example.com
+      # Optional: override the Arc Mainnet RPC this service talks to.
+      # Leave unset to use Circle's official https://rpc.mainnet.arc.io.
+      # - key: DEMO_RPC_URL
+      #   value: https://your-provider.example.com

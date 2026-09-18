@@ -17,7 +17,7 @@ export function Footer() {
           <span className="text-zinc-700">·</span>
           <span>{tr(i18n.footer.license, lang)}</span>
           <span className="text-zinc-700">·</span>
-          <span>v0.4.0</span>
+          <span>v0.10.0</span>
         </div>
 
         <div className="flex items-center gap-4 text-sm text-zinc-500">

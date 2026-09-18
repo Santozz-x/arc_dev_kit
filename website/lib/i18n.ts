@@ -17,6 +17,7 @@ export const i18n = {
     quickstart: t('Quickstart', 'Quickstart'),
     api: t('API', 'API'),
     cookbook: t('Cookbook', 'Cookbook'),
+    demo: t('Demo Mainnet', 'Mainnet Demo'),
     langToggle: t('EN', 'PT'),
   },
   sidebar: {
@@ -99,10 +100,86 @@ export const i18n = {
     codeLinkText: t('Ver documentação completa', 'View full documentation'),
     ctaTitle: t('Pronto para começar?', 'Ready to get started?'),
     ctaSubtitle: t(
-      'Instale o Arc DevKit e conecte-se ao testnet Arc em minutos.',
-      'Install Arc DevKit and connect to the Arc testnet in minutes.'
+      'Instale o Arc DevKit e conecte-se à Arc Mainnet em minutos.',
+      'Install Arc DevKit and connect to Arc Mainnet in minutes.'
     ),
     ctaInstall: t('Guia de instalação', 'Installation guide'),
     ctaGithub: t('Ver no GitHub', 'View on GitHub'),
+  },
+  demo: {
+    title: t('Demonstração na Mainnet', 'Mainnet Demo'),
+    subtitle: t(
+      'O Arc DevKit é um toolkit Python (SDK + CLI). Esta página consulta a Arc Mainnet ao vivo através do backend Python do próprio Arc DevKit — nenhuma chamada de RPC é feita em JavaScript.',
+      'Arc DevKit is a Python toolkit (SDK + CLI). This page queries Arc Mainnet live through Arc DevKit’s own Python backend — no RPC calls are made from JavaScript.'
+    ),
+    liveBadge: t('AO VIVO', 'LIVE'),
+    unavailableBadge: t('BACKEND INDISPONÍVEL', 'BACKEND UNAVAILABLE'),
+    loadingBadge: t('CARREGANDO', 'LOADING'),
+    notConfiguredTitle: t(
+      'Backend de demonstração não configurado',
+      'Demo backend not configured'
+    ),
+    notConfiguredBody: t(
+      'Esta implantação do site não tem NEXT_PUBLIC_DEMO_API_URL configurada, então esta página não pode consultar a Arc Mainnet ao vivo agora. O código Python abaixo funciona de forma independente — rode-o localmente com o Arc DevKit instalado.',
+      'This site deployment has no NEXT_PUBLIC_DEMO_API_URL configured, so this page cannot query Arc Mainnet live right now. The Python code below works independently — run it locally with Arc DevKit installed.'
+    ),
+    unavailableBody: t(
+      'Não foi possível contatar o backend de demonstração agora. Isso não é um erro do Arc DevKit em si — é a disponibilidade deste serviço específico. Nenhum dado falso é mostrado.',
+      'Could not reach the demo backend right now. This is not an error in Arc DevKit itself — it reflects this specific service’s availability. No fake data is shown.'
+    ),
+    statusTitle: t('Status da conexão', 'Connection status'),
+    network: t('Rede', 'Network'),
+    chainIdExpected: t('Chain ID esperado', 'Expected chain ID'),
+    chainIdRpc: t('Chain ID retornado pelo RPC', 'Chain ID returned by RPC'),
+    chainIdMatch: t('Chain ID confere', 'Chain ID matches'),
+    latency: t('Latência', 'Latency'),
+    usdcContract: t('Contrato USDC deployado', 'USDC contract deployed'),
+    refresh: t('Atualizar', 'Refresh'),
+    blockTitle: t('Bloco mais recente', 'Latest block'),
+    blockNumber: t('Número', 'Number'),
+    blockHash: t('Hash', 'Hash'),
+    blockTimestamp: t('Timestamp', 'Timestamp'),
+    blockTxCount: t('Transações', 'Transactions'),
+    txTitle: t('Consultar e analisar uma transação', 'Look up and analyze a transaction'),
+    txInputPlaceholder: t('Cole um hash de transação (0x...)', 'Paste a transaction hash (0x...)'),
+    txLookupButton: t('Consultar', 'Look up'),
+    txFindButton: t('Buscar uma transação recente', 'Find a recent transaction'),
+    txHash: t('Hash', 'Hash'),
+    txStatus: t('Status', 'Status'),
+    txBlock: t('Bloco', 'Block'),
+    txFrom: t('De', 'From'),
+    txTo: t('Para', 'To'),
+    txValueNative: t('Valor (USDC nativo, 18 decimais)', 'Value (native USDC, 18 decimals)'),
+    txGasCost: t('Custo de gas (USDC nativo, 18 decimais)', 'Gas cost (native USDC, 18 decimals)'),
+    txErc20Transfers: t(
+      'Transfer(s) ERC-20 de USDC decodificado(s) (6 decimais)',
+      'Decoded USDC ERC-20 Transfer log(s) (6 decimals)'
+    ),
+    txNoErc20: t(
+      'Nenhum log de Transfer ERC-20 de USDC nesta transação.',
+      'No USDC ERC-20 Transfer log in this transaction.'
+    ),
+    debugTitle: t(
+      'Análise do debugger (use_ai=False, sem IA)',
+      'Debugger analysis (use_ai=False, no AI)'
+    ),
+    debugSummary: t('Resumo', 'Summary'),
+    viewExplorer: t('Ver no explorer', 'View on explorer'),
+    queriedAt: t('Consultado em', 'Queried at'),
+    codeTitle: t('Código Python equivalente', 'Equivalent Python code'),
+    installTitle: t('Instalação', 'Installation'),
+    historicalTitle: t('Referência histórica gravada', 'Recorded historical reference'),
+    historicalBody: t(
+      'Os valores abaixo foram registrados em uma execução real passada (ver a página de evidências da demonstração) — não são atualizados ao vivo. Use os controles acima para uma consulta ao vivo.',
+      'The values below were recorded from a real past run (see the demo evidence page) — they are not live-updating. Use the controls above for a live query.'
+    ),
+    historicalLink: t(
+      'Ver evidência completa: tutorial, gravação em vídeo/asciinema e transação verificável →',
+      'See full evidence: tutorial, video/asciinema recording, and verifiable transaction →'
+    ),
+    invalidHash: t(
+      'Hash de transação inválido (esperado 0x + 64 caracteres hex).',
+      'Invalid transaction hash (expected 0x + 64 hex chars).'
+    ),
   },
 }
