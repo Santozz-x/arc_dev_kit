@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { LogoMark } from '@/components/Logo'
 import { i18n, tr, type Locale } from '@/lib/i18n'
 import {
   Zap,
@@ -75,6 +76,7 @@ export default async function Home() {
         </div>
 
         <div className="relative max-w-4xl mx-auto text-center">
+          <LogoMark size={88} className="mx-auto mb-6 shadow-xl shadow-arc-500/10 rounded-[21px]" />
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-arc-500/15 border border-arc-500/30 text-arc-300 text-xs font-medium mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-arc-400 animate-pulse" />
             {tr(i18n.home.heroBadge, lang)}

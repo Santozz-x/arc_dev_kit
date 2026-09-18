@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   description:
     'Complete Python toolkit for building on Arc (Circle) — Dev Copilot, Payment Agents, Tx Debugger, Portfolio Analyzer, REST API and CLI.',
   keywords: ['arc blockchain', 'circle', 'usdc', 'python sdk', 'web3', 'evm', 'devkit'],
+  icons: {
+    icon: [{ url: '/brand/arc-devkit-mark.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/brand/apple-touch-icon.png', sizes: '180x180' }],
+  },
   openGraph: {
     title: 'Arc DevKit',
     description: 'Python SDK for the Arc blockchain by Circle',

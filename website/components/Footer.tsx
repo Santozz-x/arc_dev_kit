@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Github } from 'lucide-react'
+import { LogoMark } from './Logo'
 import { useLanguage } from './LanguageProvider'
 import { i18n, tr } from '@/lib/i18n'
 
@@ -12,7 +13,7 @@ export function Footer() {
     <footer className="border-t border-zinc-800/80 bg-zinc-950 py-8 mt-16">
       <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-sm text-zinc-500">
-          <span className="w-5 h-5 rounded bg-gradient-to-br from-arc-400 to-arc-600 inline-block" />
+          <LogoMark size={28} />
           <span>Arc DevKit</span>
           <span className="text-zinc-700">·</span>
           <span>{tr(i18n.footer.license, lang)}</span>

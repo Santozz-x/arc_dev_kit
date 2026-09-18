@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <title>Arc DevKit</title>
+  <defs>
+    <linearGradient id="arc" x1="42" y1="88" x2="88" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8855FF"/>
+      <stop offset="1" stop-color="#E3DCFF"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="126" height="126" rx="30" fill="#111018" stroke="#393047" stroke-width="2"/>
+  <path d="M28 48 14 64 28 80M100 48 114 64 100 80" stroke="#A98AFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M44 88V57C44 29 84 29 84 57V88" stroke="url(#arc)" stroke-width="10" stroke-linecap="round"/>
+  <path d="M57 76H71" stroke="#6EE7B7" stroke-width="7" stroke-linecap="round"/>
+</svg>
