@@ -246,12 +246,13 @@ app.include_router(
 @limiter.limit("30/minute")
 async def health(request: Request) -> dict:
     """
-    Return API status including Arc testnet connectivity.
+    Return API status including Arc RPC connectivity for the active network
+    (ARC_NETWORK — mainnet or testnet).
 
     Fields:
     - status: "ok" or "degraded"
     - version: installed package version
-    - rpc_connected: True if the Arc testnet responds
+    - rpc_connected: True if the configured Arc RPC responds
     - block_number: current block (if connected)
     - latency_ms: RPC call latency in milliseconds
     """

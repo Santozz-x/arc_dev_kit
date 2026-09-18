@@ -1,4 +1,11 @@
-# RPC Migration Guide — `rpc.arc.io` → `arc-testnet.drpc.org`
+# RPC Migration Guide — `rpc.arc.io` → `arc-testnet.drpc.org` (historical, pre-v0.2)
+
+> **Looking for the Arc Mainnet migration guide?** This page documents an old,
+> unrelated pre-v0.2 testnet RPC change. For moving from testnet to mainnet
+> (or updating from the now-superseded `arc-testnet.drpc.org` testnet default
+> to Circle's current official `https://rpc.testnet.arc.io`), see
+> [`docs/mainnet/MIGRATION_FROM_TESTNET.md`](mainnet/MIGRATION_FROM_TESTNET.md)
+> and [`docs/mainnet/NETWORK_CONFIG.md`](mainnet/NETWORK_CONFIG.md) instead.
 
 This note documents the breaking change in how you connect to the Arc testnet.
 

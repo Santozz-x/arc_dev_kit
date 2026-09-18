@@ -7,9 +7,14 @@ EnvironmentError from config.py at load time.
 
 import os
 
-# Set test environment variables before any package import
+# Set test environment variables before any package import.
+# Unit tests default to the testnet profile explicitly (matching the RPC/chain
+# ID below) — the SDK's own default network is mainnet (see arc_devkit.networks
+# .DEFAULT_NETWORK), but unit tests should be deterministic regardless of that
+# default, and most fixtures/mocks below predate mainnet support.
 os.environ.setdefault("ANTHROPIC_API_KEY", "sk-ant-test-key-for-tests-only")
-os.environ.setdefault("ARC_RPC_URL", "https://arc-testnet.drpc.org")
+os.environ.setdefault("ARC_NETWORK", "testnet")
+os.environ.setdefault("ARC_RPC_URL", "https://rpc.testnet.arc.io")
 os.environ.setdefault("ARC_CHAIN_ID", "5042002")
 os.environ.setdefault("LOG_LEVEL", "WARNING")  # reduce noise during tests
 

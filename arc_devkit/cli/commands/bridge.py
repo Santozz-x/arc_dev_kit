@@ -44,12 +44,17 @@ def send(
         ..., "--dest-chain-id", help="EVM chain id of the destination chain."
     ),
     key: str = typer.Option("", "--key", help="Private key (overrides ARC_PRIVATE_KEY)."),
+    yes: bool = typer.Option(
+        False, "--yes", "-y", help="Skip the mainnet confirmation prompt (for scripts/automation)."
+    ),
 ) -> None:
     """
     Burn USDC on Arc to start a CCTP cross-chain transfer.
 
-    Fails clearly today — Arc's CCTP contract address isn't published yet
-    (see `arcdevkit network show testnet`).
+    Uses the CCTP TokenMessengerV2 contract for the active network (see
+    `arcdevkit network show <testnet|mainnet>`). NOT VALIDATED against a live
+    Arc CCTP contract from this SDK yet — test on testnet with small amounts
+    first (see arc_devkit/bridge/cctp.py module docstring).
 
     Example:
       arcdevkit bridge send 0xDest... 10.0 --dest-domain 0 --dest-chain-id 1
@@ -61,6 +66,16 @@ def send(
     from arc_devkit.core.connection import get_web3
 
     private_key = key or settings.arc_private_key
+
+    if settings.arc_network == "mainnet":
+        console.print("\n[bold red]Network: ARC MAINNET[/bold red]")
+        console.print(
+            "[bold red]WARNING: This bridges real funds cross-chain (hard to reverse).[/bold red]"
+        )
+        console.print(f"  Sending {amount} USDC to {to} (destination domain {dest_domain})\n")
+        if not yes and not typer.confirm("Burn USDC on Arc Mainnet to start this transfer?"):
+            console.print("[yellow]Aborted — no transaction sent.[/yellow]")
+            raise typer.Exit(1)
     if not private_key:
         console.print("\n[red]✗ Error:[/red] No private key configured.\n")
         raise typer.Exit(1)

@@ -6,6 +6,93 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.9.0] — 2026-09-18 — Arc Mainnet Support
+
+Arc Mainnet launched 2026-09-16. This release makes it Arc DevKit's default,
+first-class network, with Arc Testnet remaining fully supported. Full audit,
+plan, architecture map, and final report: [`docs/mainnet/`](docs/mainnet/).
+
+**Breaking change:** `ARC_NETWORK` now defaults to `mainnet` (was `testnet`).
+Set `ARC_NETWORK=testnet` explicitly to keep developing against testnet — see
+[`docs/mainnet/MIGRATION_FROM_TESTNET.md`](docs/mainnet/MIGRATION_FROM_TESTNET.md).
+
+### Added
+
+- **Native Arc Mainnet configuration** — `arc_devkit/networks.py` now has
+  fully sourced, verified values for both networks: chain ID, RPC/WS URL,
+  explorer, and contract addresses for USDC, EURC, USYC, CCTP V2
+  (TokenMessenger/MessageTransmitter/TokenMinter/Message), Gateway
+  (Wallet/Minter), Multicall3, and Permit2. Every value cites its official
+  source in `docs/mainnet/MIGRATION_AUDIT.md` Part B.
+- **`arc_devkit.Arc`** — a new, additive facade class over the existing
+  modules: `Arc.mainnet()` / `Arc.testnet()` / `Arc(network=..., rpc_url=...)`
+  with `.get_balance()`, `.get_transaction()`, `.wait_for_transaction()`,
+  `.latest_block()`, `.get_block()`, `.debug_transaction()`, `.usdc`,
+  `.contract()`, and `.health_check()`. Every existing per-module import path
+  keeps working unchanged.
+- **`arc doctor` / `arcdevkit doctor`** (and `Arc.health_check()`) — read-only
+  network health check: RPC reachability, chain ID match, latest block,
+  latency, and USDC contract code presence (`eth_getCode`), backed by a new
+  shared `arc_devkit.health` module.
+- **USDC native/ERC-20 dual interface support** — USDC is Arc's native gas
+  token (18 decimals) *and* an ERC-20 (6 decimals) at a fixed, network-shared
+  address (`0x3600...0000`). New `native_usdc_balance()` reads the 18-decimal
+  native view; `StablecoinToken`/`USDCToken` continue to cover the 6-decimal
+  ERC-20 view, with `transfer_from()` added for completeness.
+- **Mainnet safety prompts** — `arc send --broadcast` and
+  `arcdevkit bridge send` print `Network: ARC MAINNET` /
+  `WARNING: This transaction uses real funds.` and require confirmation (or
+  `--yes`) before broadcasting on mainnet; testnet is unaffected.
+- **`arc status`/`arcdevkit status`** now render the active network by name
+  (with a red "real funds" warning on mainnet) instead of a hardcoded
+  "Arc Testnet" label.
+- **CCTP V2 support** — `CCTPBridge` now targets the correct
+  `depositForBurn` V2 signature (destinationCaller/maxFee/minFinalityThreshold)
+  and resolves the burn-token address from the active network instead of a
+  hardcoded placeholder. **Not yet validated** against a live Arc CCTP
+  contract — see Known Limitations below.
+- `examples/mainnet/` — 10 runnable scripts (01–07 read-only, validated live
+  against Arc Mainnet on 2026-09-18; 08–10 write real funds, gated behind an
+  explicit `CONFIRM=yes`).
+- `docs/mainnet/` — full mainnet documentation set: getting started, network
+  config, USDC, transactions, gas/fees, smart contracts, wallets, transaction
+  debugger, CLI, security, migration-from-testnet, plus the audit/plan/
+  architecture/report docs behind this release.
+
+### Fixed
+
+- `config.py` no longer silently falls back to testnet's chain ID (`5042002`)
+  when a network profile has no chain ID and none is set explicitly — it now
+  raises a clear error instead of risking a transaction signed for the wrong
+  chain.
+- `core/gas.py`, `agents/payment_agent.py`, and `bridge/cctp.py` no longer
+  import a hardcoded testnet USDC placeholder address — they resolve it from
+  the active network's config, so `fees quote --token usdc` and USDC payments
+  now work correctly regardless of `ARC_NETWORK`.
+- `USDCToken()` no longer defaults to the zero address — it defaults to the
+  real, official USDC ERC-20 address.
+- Stale "testnet"/RPC/faucet references corrected throughout the CLI, API
+  docstrings, Copilot's system prompt (which previously told Claude "mainnet
+  expected Summer 2026" as ground truth), and portfolio AI analysis prompts.
+- Default testnet RPC updated from `arc-testnet.drpc.org` to Circle's current
+  official `rpc.testnet.arc.io`; faucet reference updated from the stale
+  `faucet.arc.io` to the current `faucet.circle.com`.
+
+### Known limitations
+
+- CCTP V2 `depositForBurn` ABI is implemented per Circle's public
+  documentation but **not exercised against a live Arc CCTP contract**.
+- Circle's public Iris attestation API has an open, unresolved report (as of
+  2026-09-18) of not returning attestations for Arc Testnet's CCTP domain 26.
+- No per-command `--network` CLI override flag yet (use `ARC_NETWORK` in
+  `.env`/shell).
+- `debug_traceTransaction` support on Circle's default RPC is unconfirmed
+  from an official source for either network.
+
+See [`docs/mainnet/MAINNET_MIGRATION_REPORT.md`](docs/mainnet/MAINNET_MIGRATION_REPORT.md) for the full validation checklist.
+
+---
+
 ## [0.8.0] — 2026-07-25
 
 Implements all six sprints of `SPRINTS_2026H2.md` — multi-network config,

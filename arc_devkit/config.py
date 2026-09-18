@@ -114,7 +114,17 @@ def _load_settings() -> Settings:
     # Support multiple comma-separated RPCs
     rpc_urls = tuple(u.strip() for u in rpc_url.split(",") if u.strip())
 
-    chain_id = int(chain_id_raw) if chain_id_raw else (profile.chain_id or 5042002)
+    if chain_id_raw:
+        chain_id = int(chain_id_raw)
+    elif profile.chain_id is not None:
+        chain_id = profile.chain_id
+    else:
+        # Never silently default to another network's chain ID — that would
+        # let a transaction get signed for the wrong chain without warning.
+        raise OSError(
+            f"\n\n  Network {network_name!r} has no default chain ID and ARC_CHAIN_ID "
+            "is not set.\n  Set ARC_CHAIN_ID explicitly in your .env.\n"
+        )
 
     # Private key resolution: env var > OS keyring > None (read-only mode)
     private_key = os.getenv("ARC_PRIVATE_KEY", "").strip() or _load_key_from_keyring()

@@ -34,10 +34,12 @@ MENU = {
 
 
 def banner(block: int, chain_id: int, gas_gwei: str) -> None:
+    from arc_devkit.config import settings
+
     tabela = Table(show_header=False, border_style="cyan", padding=(0, 1))
     tabela.add_column("campo", style="dim")
     tabela.add_column("valor", style="bold")
-    tabela.add_row("Rede", "Arc Testnet")
+    tabela.add_row("Rede", f"Arc {settings.arc_network.capitalize()}")
     tabela.add_row("Chain ID", str(chain_id))
     tabela.add_row("Bloco atual", f"#{block}")
     tabela.add_row("Gas price", f"{gas_gwei} gwei")
@@ -188,9 +190,10 @@ def cmd_debug() -> None:
 
 def main() -> None:
     # Conectar na Arc antes de qualquer coisa
+    from arc_devkit.config import settings
     from arc_devkit.core.connection import check_connection, get_web3
 
-    console.print("\n[dim]Conectando na Arc testnet...[/dim]")
+    console.print(f"\n[dim]Conectando na Arc {settings.arc_network.capitalize()}...[/dim]")
 
     if not check_connection():
         console.print(

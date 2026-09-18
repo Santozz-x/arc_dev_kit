@@ -139,8 +139,8 @@ def trace(
     """
     Fetch an internal-call trace via debug_traceTransaction, if the RPC supports it.
 
-    Most public RPC endpoints (including the default Arc testnet RPC) disable
-    the debug_* namespace — this fails with a clear message rather than a
+    Most public RPC endpoints (including Circle's default Arc RPC, on both
+    mainnet and testnet) disable the debug_* namespace — this fails with a clear message rather than a
     generic RPC error.
 
     Example:

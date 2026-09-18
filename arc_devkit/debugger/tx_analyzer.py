@@ -9,8 +9,22 @@ from web3 import Web3
 from web3.types import HexStr, TxParams
 
 from arc_devkit.core.connection import get_web3
+from arc_devkit.networks import NETWORKS
 
 logger = logging.getLogger(__name__)
+
+
+def _network_label(w3: Web3) -> str:
+    """Best-effort network name for a chain ID, so reports never confuse mainnet/testnet."""
+    try:
+        chain_id = w3.eth.chain_id
+    except Exception:
+        return "unknown"
+    for profile in NETWORKS.values():
+        if profile.chain_id == chain_id:
+            return f"Arc {profile.name.capitalize()}"
+    return f"unknown (chain_id={chain_id})"
+
 
 # Solidity revert selectors
 _REVERT_SELECTOR = bytes.fromhex("08c379a0")  # Error(string)
@@ -210,6 +224,7 @@ class TxAnalyzer:
             logger.error("Error fetching transaction %s: %s", tx_hash, exc)
             return {
                 "hash": tx_hash,
+                "network": _network_label(self._w3),
                 "status": "error",
                 "summary": f"Could not fetch transaction: {exc}",
                 "custo_usdc": "0",
@@ -271,6 +286,7 @@ class TxAnalyzer:
 
         return {
             "hash": tx_hash,
+            "network": _network_label(self._w3),
             "status": status_str,
             "summary": summary,
             "custo_usdc": str(cost_decimal),
@@ -286,8 +302,8 @@ class TxAnalyzer:
         Fetch an internal-call trace via debug_traceTransaction, if the connected
         RPC supports it.
 
-        Most public RPC endpoints (including the default Arc testnet RPC)
-        disable the non-standard debug_* namespace — this returns a clear,
+        Most public RPC endpoints (including Circle's default Arc RPC, on
+        both mainnet and testnet) disable the non-standard debug_* namespace — this returns a clear,
         structured "not supported" result instead of raising.
 
         Args:

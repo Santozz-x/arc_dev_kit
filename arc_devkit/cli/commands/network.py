@@ -65,14 +65,23 @@ def show_network(
     contracts = profile.contracts
     console.print(
         Panel(
-            f"[bold]Chain ID:[/bold]  {_dim_or(str(profile.chain_id) if profile.chain_id else None)}\n"
-            f"[bold]RPC URL:[/bold]   {_dim_or(profile.rpc_url)}\n"
-            f"[bold]Explorer:[/bold]  {_dim_or(profile.explorer_url)}\n\n"
+            f"[bold]Chain ID:[/bold]      {_dim_or(str(profile.chain_id) if profile.chain_id else None)}\n"
+            f"[bold]RPC URL:[/bold]       {_dim_or(profile.rpc_url)}\n"
+            f"[bold]WS RPC URL:[/bold]    {_dim_or(profile.ws_rpc_url)}\n"
+            f"[bold]Explorer:[/bold]      {_dim_or(profile.explorer_url)}\n"
+            f"[bold]Native gas:[/bold]    {profile.native_currency_symbol} "
+            f"({profile.native_currency_decimals} decimals)\n\n"
             f"[bold]Contracts[/bold]\n"
-            f"  USDC:                  {_dim_or(contracts.usdc)}\n"
-            f"  EURC:                  {_dim_or(contracts.eurc)}\n"
-            f"  CCTP Token Messenger:  {_dim_or(contracts.cctp_token_messenger)}\n"
-            f"  Gateway:               {_dim_or(contracts.gateway)}",
+            f"  USDC (ERC-20, 6 dec):        {_dim_or(contracts.usdc)}\n"
+            f"  EURC:                        {_dim_or(contracts.eurc)}\n"
+            f"  CCTP Token Messenger (V2):   {_dim_or(contracts.cctp_token_messenger)}\n"
+            f"  CCTP Message Transmitter:    {_dim_or(contracts.cctp_message_transmitter)}\n"
+            f"  CCTP Token Minter:           {_dim_or(contracts.cctp_token_minter)}\n"
+            f"  CCTP domain:                 {_dim_or(str(contracts.cctp_domain) if contracts.cctp_domain is not None else None)}\n"
+            f"  Gateway Wallet:              {_dim_or(contracts.gateway_wallet)}\n"
+            f"  Gateway Minter:              {_dim_or(contracts.gateway_minter)}\n"
+            f"  Multicall3:                  {_dim_or(contracts.multicall3)}\n"
+            f"  Permit2:                     {_dim_or(contracts.permit2)}",
             title=f"[bold cyan]Arc Network — {profile.name}[/bold cyan]",
             border_style="cyan",
             padding=(1, 2),
@@ -100,7 +109,9 @@ def check_mainnet() -> None:
         ("USDC contract", profile.contracts.usdc is not None),
         ("EURC contract", profile.contracts.eurc is not None),
         ("CCTP Token Messenger", profile.contracts.cctp_token_messenger is not None),
-        ("Gateway contract", profile.contracts.gateway is not None),
+        ("CCTP Message Transmitter", profile.contracts.cctp_message_transmitter is not None),
+        ("Gateway Wallet", profile.contracts.gateway_wallet is not None),
+        ("Gateway Minter", profile.contracts.gateway_minter is not None),
     ]
 
     tabela = Table(

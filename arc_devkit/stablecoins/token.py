@@ -1,4 +1,14 @@
-"""Circle stablecoin (USDC/EURC) ERC-20 wrapper for the Arc blockchain."""
+"""Circle stablecoin (USDC/EURC) ERC-20 wrapper for the Arc blockchain.
+
+USDC on Arc has a dual interface (see docs/mainnet/MIGRATION_AUDIT.md Part B.6):
+USDC is Arc's *native* gas token (18 decimals, read like ETH via
+eth_getBalance), and is *also* exposed through an optional ERC-20 interface
+at a fixed precompile address (arc_devkit.networks.USDC_ERC20_ADDRESS) using
+the conventional 6 decimals. Both views share the same underlying balance —
+there is no wrapper token. This module's StablecoinToken/USDCToken classes
+operate on the ERC-20 (6-decimal) view; use native_usdc_balance() for the
+native (18-decimal) gas balance. Never mix the two without converting.
+"""
 
 import logging
 from decimal import Decimal
@@ -6,12 +16,18 @@ from decimal import Decimal
 from web3 import Web3
 
 from arc_devkit.core.connection import get_web3
+from arc_devkit.networks import NATIVE_USDC_DECIMALS, USDC_ERC20_ADDRESS
 
 logger = logging.getLogger(__name__)
 
-# Circle stablecoins (USDC, EURC) all use 6 decimals on Arc.
+# Circle stablecoins (USDC, EURC) all use 6 decimals on Arc via the ERC-20
+# interface (distinct from native USDC's 18 decimals — see module docstring).
 USDC_DECIMALS = 6
 USDC_MULTIPLIER = 10**USDC_DECIMALS
+
+# int annotation needed: mypy's int.__pow__ returns Any for a non-literal
+# exponent (since a negative exponent would produce a float at runtime).
+_NATIVE_USDC_MULTIPLIER: int = 10**NATIVE_USDC_DECIMALS
 
 # Minimal ERC-20 ABI for supported operations
 _ERC20_ABI = [
@@ -53,6 +69,17 @@ _ERC20_ABI = [
         "type": "function",
     },
     {
+        "constant": False,
+        "inputs": [
+            {"name": "_from", "type": "address"},
+            {"name": "_to", "type": "address"},
+            {"name": "_value", "type": "uint256"},
+        ],
+        "name": "transferFrom",
+        "outputs": [{"name": "", "type": "bool"}],
+        "type": "function",
+    },
+    {
         "constant": True,
         "inputs": [],
         "name": "decimals",
@@ -88,9 +115,28 @@ _ERC20_ABI = [
     },
 ]
 
-# Placeholder address for USDC contract on Arc testnet.
-# Replace when the official address is published by Circle.
-USDC_ARC_TESTNET_ADDRESS = "0x0000000000000000000000000000000000000000"
+# Deprecated: use arc_devkit.networks.USDC_ERC20_ADDRESS (or
+# settings.network.contracts.usdc) instead. Kept as an alias for backward
+# compatibility — this used to be a zero-address testnet placeholder before
+# Circle published the real (network-independent) ERC-20 address.
+USDC_ARC_TESTNET_ADDRESS = USDC_ERC20_ADDRESS
+
+
+def native_usdc_balance(address: str, w3: Web3 | None = None) -> Decimal:
+    """
+    Return the *native* USDC gas balance of an address (18 decimals).
+
+    This reads eth_getBalance, the same call used for any EVM chain's native
+    coin — on Arc that balance IS USDC, not a separate gas token. This is
+    NOT the same number as StablecoinToken.balance() / USDCToken.balance(),
+    which reads the 6-decimal ERC-20 view via balanceOf(). Both represent the
+    same underlying funds at different decimal scales — never compare them
+    without converting first.
+    """
+    w3 = w3 or get_web3()
+    checksum = Web3.to_checksum_address(address)
+    wei = w3.eth.get_balance(checksum)
+    return Decimal(str(wei)) / _NATIVE_USDC_MULTIPLIER
 
 
 class StablecoinToken:
@@ -250,13 +296,64 @@ class StablecoinToken:
         tx_hash = self._w3.eth.send_raw_transaction(signed.raw_transaction)
         return tx_hash.hex()
 
+    def transfer_from(
+        self,
+        owner: str,
+        to: str,
+        amount: Decimal,
+        private_key: str,
+        gas: int = 65_000,
+    ) -> str:
+        """
+        Transfer tokens from `owner` to `to` using a prior approve() allowance.
+
+        Args:
+            owner: Address that previously approved the caller as spender.
+            to: EVM destination address.
+            amount: Amount to transfer, in the token's human-readable unit.
+            private_key: Spender's (caller's) private key.
+            gas: Gas limit.
+
+        Returns:
+            Transaction hash.
+        """
+        from eth_account import Account
+
+        owner_cs = Web3.to_checksum_address(owner)
+        destinatario = Web3.to_checksum_address(to)
+        spender = Account.from_key(private_key).address
+        atomic = self._to_atomic(amount)
+
+        tx = self._contract.functions.transferFrom(
+            owner_cs, destinatario, atomic
+        ).build_transaction(
+            {
+                "from": spender,
+                "gas": gas,
+                "gasPrice": self._w3.eth.gas_price,
+                "nonce": self._w3.eth.get_transaction_count(spender),
+                "chainId": self._w3.eth.chain_id,
+            }
+        )
+
+        signed = self._w3.eth.account.sign_transaction(tx, private_key)
+        tx_hash = self._w3.eth.send_raw_transaction(signed.raw_transaction)
+        return tx_hash.hex()
+
 
 class USDCToken(StablecoinToken):
-    """USDC on Arc. Defaults to the testnet placeholder contract address."""
+    """
+    USDC on Arc (ERC-20 view, 6 decimals).
+
+    The ERC-20 address is identical on mainnet and testnet
+    (arc_devkit.networks.USDC_ERC20_ADDRESS), so it's used as the default —
+    no network guessing involved, unlike the old zero-address placeholder.
+    Pass contract_address explicitly only if you need to override it.
+    """
 
     def __init__(
         self,
-        contract_address: str = USDC_ARC_TESTNET_ADDRESS,
+        contract_address: str = USDC_ERC20_ADDRESS,
         w3: Web3 | None = None,
     ) -> None:
         super().__init__(contract_address, w3=w3, symbol="USDC", decimals=USDC_DECIMALS)
