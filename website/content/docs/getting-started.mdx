@@ -9,8 +9,8 @@ order: 2
 
 - Python **3.11** ou superior
 - pip / pipenv / uv
-- Uma chave de API Anthropic — [obtenha em console.anthropic.com](https://console.anthropic.com)
-- Acesso ao Arc testnet RPC
+- Uma chave de provedor de IA para o Dev Copilot — Anthropic (padrão, [obtenha em console.anthropic.com](https://console.anthropic.com)), ou Google Gemini / OpenAI / um servidor Ollama local
+- Nenhuma configuração de RPC necessária para começar — Arc Mainnet e Arc Testnet já vêm com RPCs padrão oficiais
 
 ## Instalação
 
@@ -54,42 +54,50 @@ cp .env.example .env
 
 ```bash
 # .env
-ANTHROPIC_API_KEY=sk-ant-...      # obrigatório
-ARC_RPC_URL=https://arc-testnet.drpc.org  # obrigatório
+ANTHROPIC_API_KEY=sk-ant-...      # obrigatório (quando COPILOT_PROVIDER=anthropic, o padrão)
 
-# Opcionais
+# Opcionais — o padrão é mainnet; defina testnet para desenvolvimento.
+# RPC/chain ID já vêm pré-configurados por rede — só sobrescreva para usar
+# seu próprio provedor.
+ARC_NETWORK=testnet               # ou mainnet (padrão do SDK)
+ARC_RPC_URL=
+ARC_CHAIN_ID=
 ARC_PRIVATE_KEY=0x...             # para enviar transações
 ANTHROPIC_MODEL=claude-sonnet-4-6
-ARC_CHAIN_ID=5042002
 LOG_LEVEL=INFO
 API_KEY=                          # para autenticar a REST API
 ```
 
 <Callout type="warning" title="Segurança">
-  Nunca commit o arquivo `.env` no git. Adicione-o ao `.gitignore`. A chave privada (`ARC_PRIVATE_KEY`) é necessária apenas para operações de escrita.
+  Nunca commit o arquivo `.env` no git. Adicione-o ao `.gitignore`. A chave privada (`ARC_PRIVATE_KEY`) é necessária apenas para operações de escrita. A Arc Mainnet é o padrão do SDK — se `ARC_NETWORK` não for definido, qualquer transação enviada gasta USDC real. Defina `ARC_NETWORK=testnet` durante o desenvolvimento.
 </Callout>
 
 ## Verificando a conexão
 
 ```bash
 arcdevkit status
+arcdevkit doctor
 ```
 
 Saída esperada:
 
 ```
-Arc testnet: connected ✓
-Chain ID:    5042002
-Latest block: 4821903
-Gas (USDC):  0.000021 USDC/tx
+Arc Mainnet
+Chain ID:      5042
+Current block: #21500000
+Gas price:     0.02 gwei
+
+⚠ Real funds — mainnet
 ```
+
+`arcdevkit doctor` roda um health check completo: alcançabilidade do RPC, chain ID, bloco mais recente, latência e presença do contrato USDC.
 
 ## Primeiros passos
 
 ### Perguntar ao Dev Copilot
 
 ```bash
-arcdevkit ask "Como faço para enviar USDC na Arc testnet?"
+arcdevkit ask "Como funciona o gas em USDC na Arc?"
 ```
 
 ### Criar uma carteira
@@ -114,11 +122,13 @@ arcdevkit debug tx 0xSeuTxHash
 
 | Variável | Obrigatória | Padrão | Descrição |
 |---|---|---|---|
-| `ANTHROPIC_API_KEY` | Sim | — | Chave da API Anthropic |
-| `ARC_RPC_URL` | Sim | — | URL do RPC Arc (vírgula para múltiplos) |
+| `ANTHROPIC_API_KEY` | Se `COPILOT_PROVIDER=anthropic` | — | Chave da API Anthropic |
+| `COPILOT_PROVIDER` | Não | `anthropic` | `anthropic` \| `gemini` \| `openai` \| `ollama` |
+| `ARC_NETWORK` | Não | `mainnet` | `mainnet` ou `testnet` — define os defaults de RPC/chain ID/contratos |
+| `ARC_RPC_URL` | Não | default da rede | Override da URL do RPC Arc (vírgula para múltiplos) |
 | `ARC_PRIVATE_KEY` | Não | — | Chave privada para transações |
 | `ANTHROPIC_MODEL` | Não | `claude-sonnet-4-6` | Modelo Claude |
-| `ARC_CHAIN_ID` | Não | `5042002` | Chain ID |
+| `ARC_CHAIN_ID` | Não | default da rede | Override do chain ID |
 | `LOG_LEVEL` | Não | `INFO` | Nível de log |
 | `API_KEY` | Não | — | Autenticação da REST API |
 

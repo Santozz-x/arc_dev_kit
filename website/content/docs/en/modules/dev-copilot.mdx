@@ -5,7 +5,24 @@ section: "Modules"
 order: 10
 ---
 
-`DevCopilot` is an AI assistant based on Anthropic's Claude Sonnet, with complete Arc blockchain context embedded in the system prompt. It answers questions, generates code, and explains Circle ecosystem concepts — no extra configuration needed.
+`DevCopilot` is an AI assistant with complete Arc blockchain context embedded in the system prompt. It answers questions, generates code, and explains Circle ecosystem concepts — no extra configuration needed beyond an API key.
+
+## Multi-provider backend
+
+`DevCopilot` is backed by a pluggable LLM provider, selected globally via `COPILOT_PROVIDER` in `.env`:
+
+```dotenv
+COPILOT_PROVIDER=anthropic   # default — requires ANTHROPIC_API_KEY
+# COPILOT_PROVIDER=gemini    # pip install arc-devkit[gemini] — requires GEMINI_API_KEY, GEMINI_MODEL
+# COPILOT_PROVIDER=openai    # pip install arc-devkit[openai] — requires OPENAI_API_KEY, OPENAI_MODEL
+# COPILOT_PROVIDER=ollama    # local, no API key — requires OLLAMA_MODEL (already pulled) and a running Ollama server
+```
+
+`ask()`, `ask_stream()`, history, caching, offline mode, and image attachments work identically across all four providers — the code on this page doesn't change based on which one is active. **No model name is ever guessed** for Gemini/OpenAI/Ollama: `GEMINI_MODEL`/`OPENAI_MODEL`/`OLLAMA_MODEL` must be set explicitly, since a hardcoded default could silently point at a deprecated or non-existent model.
+
+<Callout type="warning" title="Agentic tool-use is Anthropic-only">
+  `run_agent()` (the read-only on-chain tool-use loop used by `arc ask --agent`) raises `NotImplementedError` for any provider other than `anthropic` — each provider has an incompatible tool-calling schema that hasn't been wired up yet.
+</Callout>
 
 ## Installation and import
 
@@ -115,7 +132,8 @@ copilot = DevCopilot(
 | Cache | 5-minute TTL per MD5 hash of prompt + model |
 | History | `self.history` — list of messages in the current conversation |
 | Token logging | Token usage logged on every call (`DEBUG`) |
-| Configurable model | `ANTHROPIC_MODEL` env var (default: `claude-sonnet-4-6`) |
+| Configurable provider | `COPILOT_PROVIDER` env var (default: `anthropic`) |
+| Configurable model | Each provider's own `*_MODEL` env var (e.g. `ANTHROPIC_MODEL`, default: `claude-sonnet-4-6`) |
 
 <Callout type="tip" title="One instance per session">
   `DevCopilot` is instantiated per call — it is not a singleton. If you want continuous history, keep the same instance throughout the session.

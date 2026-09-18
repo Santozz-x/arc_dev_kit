@@ -9,8 +9,8 @@ order: 2
 
 - Python **3.11** or higher
 - pip / pipenv / uv
-- An Anthropic API key — [get one at console.anthropic.com](https://console.anthropic.com)
-- Access to the Arc testnet RPC
+- An AI provider key for Dev Copilot — Anthropic (default, [get one at console.anthropic.com](https://console.anthropic.com)), or Google Gemini / OpenAI / a local Ollama server
+- No RPC setup needed to get started — Arc Mainnet and Arc Testnet both ship with official default RPCs
 
 ## Installation
 
@@ -54,42 +54,50 @@ cp .env.example .env
 
 ```bash
 # .env
-ANTHROPIC_API_KEY=sk-ant-...      # required
-ARC_RPC_URL=https://arc-testnet.drpc.org  # required
+ANTHROPIC_API_KEY=sk-ant-...      # required (when COPILOT_PROVIDER=anthropic, the default)
 
-# Optional
+# Optional — defaults to mainnet; set testnet for development.
+# RPC/chain ID are pre-configured per network — only override to use your
+# own provider.
+ARC_NETWORK=testnet               # or mainnet (the SDK default)
+ARC_RPC_URL=
+ARC_CHAIN_ID=
 ARC_PRIVATE_KEY=0x...             # to send transactions
 ANTHROPIC_MODEL=claude-sonnet-4-6
-ARC_CHAIN_ID=5042002
 LOG_LEVEL=INFO
 API_KEY=                          # to authenticate the REST API
 ```
 
 <Callout type="warning" title="Security">
-  Never commit the `.env` file to git. Add it to `.gitignore`. The private key (`ARC_PRIVATE_KEY`) is only needed for write operations.
+  Never commit the `.env` file to git. Add it to `.gitignore`. The private key (`ARC_PRIVATE_KEY`) is only needed for write operations. Arc Mainnet is the SDK default — if `ARC_NETWORK` is unset, any broadcast transaction spends real USDC. Set `ARC_NETWORK=testnet` while developing.
 </Callout>
 
 ## Verifying the connection
 
 ```bash
 arcdevkit status
+arcdevkit doctor
 ```
 
 Expected output:
 
 ```
-Arc testnet: connected ✓
-Chain ID:    5042002
-Latest block: 4821903
-Gas (USDC):  0.000021 USDC/tx
+Arc Mainnet
+Chain ID:      5042
+Current block: #21500000
+Gas price:     0.02 gwei
+
+⚠ Real funds — mainnet
 ```
+
+`arcdevkit doctor` runs a full health check: RPC reachability, chain ID match, latest block, latency, and USDC contract presence.
 
 ## First steps
 
 ### Ask the Dev Copilot
 
 ```bash
-arcdevkit ask "How do I send USDC on the Arc testnet?"
+arcdevkit ask "How does USDC gas work on Arc?"
 ```
 
 ### Create a wallet
@@ -114,11 +122,13 @@ arcdevkit debug tx 0xYourTxHash
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `ANTHROPIC_API_KEY` | Yes | — | Anthropic API key |
-| `ARC_RPC_URL` | Yes | — | Arc RPC URL (comma-separated for multiple) |
+| `ANTHROPIC_API_KEY` | If `COPILOT_PROVIDER=anthropic` | — | Anthropic API key |
+| `COPILOT_PROVIDER` | No | `anthropic` | `anthropic` \| `gemini` \| `openai` \| `ollama` |
+| `ARC_NETWORK` | No | `mainnet` | `mainnet` or `testnet` — selects RPC/chain ID/contract defaults |
+| `ARC_RPC_URL` | No | network default | Arc RPC URL override (comma-separated for multiple) |
 | `ARC_PRIVATE_KEY` | No | — | Private key for transactions |
 | `ANTHROPIC_MODEL` | No | `claude-sonnet-4-6` | Claude model |
-| `ARC_CHAIN_ID` | No | `5042002` | Chain ID |
+| `ARC_CHAIN_ID` | No | network default | Chain ID override |
 | `LOG_LEVEL` | No | `INFO` | Log level |
 | `API_KEY` | No | — | REST API authentication |
 

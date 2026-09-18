@@ -5,10 +5,10 @@ section: "Módulos"
 order: 33
 ---
 
-`arc_devkit.bridge` implementa o fluxo **burn → attestation → mint** do Cross-Chain Transfer Protocol (CCTP) da Circle — o padrão público usado para mover USDC nativamente entre chains, sem wrapping.
+`arc_devkit.bridge` implementa o fluxo **burn → attestation → mint** do Cross-Chain Transfer Protocol (CCTP) V2 da Circle — o padrão público usado para mover USDC nativamente entre chains, sem wrapping. A Arc é o domain 26 do CCTP; endereços de TokenMessengerV2/MessageTransmitterV2/TokenMinterV2 já estão publicados tanto para mainnet quanto testnet (`arc_devkit.networks`).
 
-<Callout type="danger" title="Sem endereço CCTP publicado para a Arc ainda">
-  `CCTPBridge` levanta erro claro na construção se `contracts.cctp_token_messenger` da rede ativa for `None` — verdadeiro tanto para testnet quanto mainnet hoje. Configure `CCTP_ATTESTATION_API_URL` quando a Circle publicar suporte à Arc.
+<Callout type="warning" title="Ainda não validado contra uma transferência real">
+  O `CCTPBridge` agora usa a assinatura V2 do `depositForBurn` e resolve endereços de contrato reais e publicados — mas isso ainda não foi testado contra um contrato CCTP real da Arc. Também existe um relato público não resolvido (em 18/09/2026) de que a API pública Iris da Circle não retorna attestations para o domain 26 da Arc Testnet ([circlefin/evm-cctp-contracts#110](https://github.com/circlefin/evm-cctp-contracts/issues/110)) — verifique se a obtenção de attestation funciona antes de depender disso em produção. Por isso `CCTP_ATTESTATION_API_URL` não tem valor default.
 </Callout>
 
 ## Iniciando uma transferência
@@ -18,7 +18,7 @@ from decimal import Decimal
 from arc_devkit.bridge import CCTPBridge
 from arc_devkit.core.connection import get_web3
 
-bridge = CCTPBridge(w3=get_web3(), network="testnet")
+bridge = CCTPBridge(w3=get_web3(), network="testnet")  # ou "mainnet"
 
 transfer = bridge.start_transfer(
     amount_usdc=Decimal("10.0"),

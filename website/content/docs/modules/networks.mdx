@@ -1,11 +1,11 @@
 ---
 title: "Redes (Networks)"
-description: "Perfis de rede testnet/mainnet e registry de endereços de contrato."
+description: "Perfis de rede mainnet/testnet e registry de endereços de contrato."
 section: "Módulos"
 order: 30
 ---
 
-O módulo `arc_devkit.networks` centraliza a configuração de rede — chain ID, RPC padrão, block explorer e endereços de contrato — para que trocar entre testnet e mainnet seja **só configuração**, nunca uma mudança de código.
+O módulo `arc_devkit.networks` centraliza a configuração de rede — chain ID, RPC (HTTP + WebSocket), block explorer e endereços de contrato — para que trocar entre mainnet e testnet seja **só configuração**, nunca uma mudança de código. As duas redes já vêm totalmente configuradas com valores oficiais, com fonte verificada contra `docs.arc.io` em 18/09/2026.
 
 ## Importação
 
@@ -16,49 +16,72 @@ from arc_devkit.networks import NETWORKS, get_network
 ## Perfis disponíveis
 
 ```python
-profile = get_network("testnet")
+profile = get_network("mainnet")
 
-print(profile.chain_id)     # 5042002
-print(profile.rpc_url)      # https://arc-testnet.drpc.org
-print(profile.contracts.usdc)
+print(profile.chain_id)     # 5042
+print(profile.rpc_url)      # https://rpc.mainnet.arc.io
+print(profile.explorer_url) # https://explorer.arc.io
+print(profile.contracts.usdc)  # 0x3600000000000000000000000000000000000000
 ```
 
-| Rede | Chain ID | RPC padrão | Status |
+| Rede | Chain ID | RPC padrão | Explorer |
 |---|---|---|---|
-| `testnet` | `5042002` | `https://arc-testnet.drpc.org` | Configurado |
-| `mainnet` | `None` | `None` | Placeholder — Arc mainnet lança no verão de 2026 |
+| `mainnet` (padrão) | `5042` | `https://rpc.mainnet.arc.io` | `https://explorer.arc.io` |
+| `testnet` | `5042002` | `https://rpc.testnet.arc.io` | `https://explorer.testnet.arc.io` |
 
-<Callout type="warning" title="mainnet ainda é um placeholder">
-  Todos os campos de `NETWORKS["mainnet"]` são `None` até a Arc/Circle publicarem os valores reais. Usar `ARC_NETWORK=mainnet` sem configurar `ARC_RPC_URL` explicitamente resulta em erro claro na inicialização — nunca um endereço inventado.
+<Callout type="tip" title="Interface dupla do USDC">
+  O USDC na Arc é tanto o token de gas *nativo* (18 decimais, lido como ETH via `eth_getBalance`) quanto um ERC-20 (6 decimais) em um endereço fixo, compartilhado entre as redes (`profile.contracts.usdc`, `0x3600...0000`). As duas visões compartilham o mesmo saldo — veja o [módulo USDC](/docs/modules/usdc-token) para como ler cada uma corretamente.
 </Callout>
+
+Todos os campos de `ContractAddresses` estão preenchidos nas duas redes: `usdc`, `eurc`, `cctp_token_messenger`, `cctp_message_transmitter`, `cctp_token_minter`, `cctp_message`, `cctp_domain` (26 na Arc), `gateway_wallet`, `gateway_minter`, `multicall3`, `permit2`.
 
 ## Selecionando a rede ativa
 
-A variável `ARC_NETWORK` (`testnet` por padrão) seleciona os defaults de RPC/chain ID:
+A variável `ARC_NETWORK` (**`mainnet` por padrão**) seleciona os defaults de RPC/chain ID/contratos:
 
 ```bash
 # .env
-ARC_NETWORK=testnet
+ARC_NETWORK=testnet   # troque para testnet durante o desenvolvimento
 ```
 
-`ARC_RPC_URL`/`ARC_CHAIN_ID`, se definidos explicitamente, sempre têm prioridade sobre o perfil — arquivos `.env` existentes continuam funcionando sem qualquer alteração.
+`ARC_RPC_URL`/`ARC_CHAIN_ID`, se definidos explicitamente, sempre têm prioridade sobre o perfil — útil para apontar para seu próprio provedor (Alchemy, QuickNode, self-hosted) em vez do RPC padrão da Circle.
 
 ```python
 from arc_devkit.config import settings
 
-print(settings.arc_network)   # "testnet"
-print(settings.network.name)  # "testnet" — NetworkProfile resolvido
+print(settings.arc_network)   # "mainnet"
+print(settings.network.name)  # "mainnet" — NetworkProfile resolvido
 ```
 
-## Verificando prontidão para mainnet
+<Callout type="warning" title="config.py nunca adivinha um chain ID">
+  Se um perfil de rede não tem chain ID e `ARC_CHAIN_ID` não foi definido explicitamente, `config.py` levanta um erro claro na inicialização em vez de cair silenciosamente no chain ID de outra rede — uma classe de bug que existia antes do suporte à Arc Mainnet e que poderia ter levado a uma transação assinada para a chain errada sem nenhum aviso.
+</Callout>
+
+## A fachada `Arc`
+
+```python
+from arc_devkit import Arc
+
+arc = Arc.mainnet()          # ou Arc.testnet()
+arc = Arc.mainnet(rpc_url="https://seu-provedor.example.com")  # RPC customizado
+
+print(arc.network.chain_id, arc.network.rpc_url)
+print(arc.latest_block()["number"])
+print(arc.health_check())
+```
+
+`Arc` é uma camada de conveniência aditiva sobre os mesmos módulos documentados neste site — todo import por módulo já existente (`from arc_devkit.debugger import TxAnalyzer`, etc.) continua funcionando sem alteração.
+
+## Verificando a saúde da rede
 
 ```bash
 arcdevkit network list
 arcdevkit network show mainnet
 arcdevkit network check-mainnet
+arcdevkit doctor
 ```
 
-`check-mainnet` é um dry-run que reporta quais campos (`chain_id`, `rpc_url`, `explorer_url`, endereços de contrato) ainda faltam antes de trocar para `ARC_NETWORK=mainnet` em produção — veja o [checklist completo](https://github.com/Jeielsantosdev/arc_dev_kit/blob/main/MAINNET_CHECKLIST.md) no repositório.
+`doctor` (também `Arc.health_check()`) é uma checagem **somente leitura** — nunca assina ou envia nada — que verifica alcançabilidade do RPC, correspondência do chain ID, bloco mais recente, latência, e se o contrato USDC realmente tem código deployado on-chain (`eth_getCode`, não apenas "um endereço está configurado").
 
 ## Referência da API
 
@@ -66,7 +89,7 @@ arcdevkit network check-mainnet
 
 | Parâmetro | Tipo | Descrição |
 |---|---|---|
-| `name` | `str` | `"testnet"` ou `"mainnet"` |
+| `name` | `str` | `"mainnet"` ou `"testnet"` |
 
 Levanta `ValueError` para nomes desconhecidos.
 
@@ -77,5 +100,8 @@ Levanta `ValueError` para nomes desconhecidos.
 | `name` | `str` | Nome da rede |
 | `chain_id` | `int \| None` | Chain ID |
 | `rpc_url` | `str \| None` | URL de RPC padrão |
+| `ws_rpc_url` | `str \| None` | URL de RPC WebSocket padrão (o primário de mainnet é HTTP-only) |
 | `explorer_url` | `str \| None` | URL do block explorer |
-| `contracts` | `ContractAddresses` | Endereços de USDC, EURC, CCTP, Gateway |
+| `native_currency_symbol` | `str` | `"USDC"` |
+| `native_currency_decimals` | `int` | `18` |
+| `contracts` | `ContractAddresses` | Endereços de USDC, EURC, USYC, CCTP V2, Gateway, Multicall3, Permit2 |

@@ -24,7 +24,7 @@ export const i18n = {
     modules: t('Módulos', 'Modules'),
     interfaces: t('Interfaces', 'Interfaces'),
     guides: t('Guias', 'Guides'),
-    testnet: t('Arc Testnet', 'Arc Testnet'),
+    network: t('Arc Mainnet', 'Arc Mainnet'),
   },
   footer: {
     docs: t('Docs', 'Docs'),
@@ -37,8 +37,8 @@ export const i18n = {
   },
   home: {
     heroBadge: t(
-      'Testnet · Chain ID 5042002 · Python 3.11+',
-      'Testnet · Chain ID 5042002 · Python 3.11+'
+      'Arc Mainnet · Chain ID 5042 · Python 3.11+',
+      'Arc Mainnet · Chain ID 5042 · Python 3.11+'
     ),
     heroTitle: t('Build on Arc,', 'Build on Arc,'),
     heroAccent: t('faster.', 'faster.'),
